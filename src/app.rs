@@ -1,9 +1,11 @@
+use std;
+
+use crossterm::event::KeyCode;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Style},
-    text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
 use unicode_width::UnicodeWidthStr;
@@ -15,13 +17,22 @@ pub enum Mode {
     Normal,
     Insert,
 }
+
+#[derive(Debug)]
+pub enum FocusedBlock {
+    Prompt,
+    Chat,
+}
+
 #[derive(Debug)]
 pub struct App {
     pub input: String,
     pub mode: Mode,
     pub running: bool,
     pub messages: Vec<String>,
-    pub input_window_height: u16,
+    pub scroll: i32,
+    pub previous_key: KeyCode,
+    pub focused_block: FocusedBlock,
 }
 
 impl Default for App {
@@ -29,9 +40,11 @@ impl Default for App {
         Self {
             running: true,
             input: String::from(">_ "),
-            input_window_height: 2,
             mode: Mode::Normal,
             messages: Vec::new(),
+            scroll: 0,
+            previous_key: KeyCode::Null,
+            focused_block: FocusedBlock::Prompt,
         }
     }
 }
@@ -47,88 +60,173 @@ impl App {
         // Layout
         let app_area = frame.size();
 
-        let vmid_area = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(0)
-            .constraints([Constraint::Percentage(100)].as_ref())
-            .split(app_area)[0];
+        // prompt height can grow till 40% of the frame height
+        let max_prompt_height = (0.4 * app_area.height as f32) as u16;
+        let prompt_height = {
+            let mut height: u16 = 3;
+            for line in self.input.lines() {
+                height += 1;
+                height += line.width() as u16 / app_area.width;
+            }
+            height
+        };
 
-        let vh_mid_area = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(0)
-            .constraints([Constraint::Percentage(100)].as_ref())
-            .split(vmid_area)[0];
+        // chat height is the frame height minus the prompt height
+        let max_chat_height = app_area.height - max_prompt_height - 3;
+        let chat_height = app_area.height - prompt_height - 3;
 
-        let container = Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::Yellow));
-
-        let inside_container = container.inner(vh_mid_area);
-
-        // TODO: set the max for the chunks[1]
         let (assisstant_block, user_block, mode_block) = {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(0)
                 .constraints(
                     [
-                        Constraint::Max(80),
-                        Constraint::Length(self.input.width() as u16 / app_area.width + 1),
+                        Constraint::Length(std::cmp::max(chat_height, max_chat_height)),
+                        Constraint::Length(std::cmp::min(prompt_height, max_prompt_height)),
                         Constraint::Length(2),
                     ]
                     .as_ref(),
                 )
-                .split(inside_container);
+                .split(frame.size());
             (chunks[0], chunks[1], chunks[2])
         };
 
-        // end layout
+        // prompt block
+        //TODO: show scroll bar
+        //TODO: Make scroll stops when reaches the top or the bottom
+        let prompt = {
+            if prompt_height > max_prompt_height {
+                let mut scroll: i32 =
+                    prompt_height as i32 - max_prompt_height as i32 + 2 + self.scroll;
+                if scroll < 0 {
+                    scroll = 0;
+                    self.scroll = 0;
+                }
 
-        let input = Paragraph::new(self.input.as_ref())
-            .style(match self.mode {
-                Mode::Normal => Style::default(),
-                Mode::Insert => Style::default().fg(Color::Yellow),
-            })
-            .wrap(Wrap { trim: false })
-            .block(Block::default());
+                println!("{}, {}", scroll, self.scroll);
+                if let FocusedBlock::Chat = self.focused_block {
+                    scroll = 0;
+                }
+
+                Paragraph::new(self.input.as_ref())
+                    .wrap(Wrap { trim: false })
+                    .scroll((scroll as u16, 0))
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .style(Style::default())
+                            .border_type(BorderType::Rounded)
+                            .border_style(match self.focused_block {
+                                FocusedBlock::Prompt => Style::default().fg(Color::Yellow),
+                                _ => Style::default(),
+                            }),
+                    )
+            } else {
+                Paragraph::new(self.input.as_ref())
+                    .wrap(Wrap { trim: false })
+                    .style(Style::default())
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .style(Style::default())
+                            .border_type(BorderType::Rounded)
+                            .border_style(match self.focused_block {
+                                FocusedBlock::Prompt => Style::default().fg(Color::Yellow),
+                                _ => Style::default(),
+                            }),
+                    )
+            }
+        };
 
         match self.mode {
             Mode::Normal => {}
 
             // TODO: set the cursor position
-            Mode::Insert => {
-                frame.set_cursor(user_block.x + self.input.width() as u16, user_block.y)
-            }
+            Mode::Insert => frame.set_cursor(
+                user_block.x + {
+                    let last_line = self.input.lines().last().unwrap_or("");
+                    let mut width = last_line.len() as u16;
+                    if last_line.len() as u16 > app_area.width {
+                        let last_word = last_line.rsplit(' ').last().unwrap_or("");
+                        width = last_line.width() as u16 % app_area.width + last_word.len() as u16;
+                    }
+                    width
+                },
+                user_block.y + self.input.lines().count() as u16,
+            ),
         }
 
-        let messages: Vec<ListItem> = self
-            .messages
-            .iter()
-            .map(|m| {
-                //TODO: make the ListItem shows in multiple lines
-                let content = Spans::from(Span::raw(m));
-                ListItem::new(content)
-            })
-            .collect();
+        // Messages block
+        let chat = {
+            let messages: String = self.messages.iter().map(|m| m.to_string()).collect();
 
-        let messages = List::new(messages).block(
-            Block::default()
-                .borders(Borders::BOTTOM)
-                .border_type(BorderType::Rounded),
-        );
+            let messages_height = {
+                let mut height: u16 = 0;
+                for msg in &self.messages {
+                    height += 1;
+                    for line in msg.lines() {
+                        height += 1;
+                        height += line.width() as u16 / app_area.width;
+                    }
+                }
+                height
+            };
 
+            if messages_height > chat_height {
+                let mut scroll = messages_height as i32 - chat_height as i32 + self.scroll;
+                if scroll < 0 {
+                    scroll = 0;
+                    self.scroll = 0;
+                }
+                if let FocusedBlock::Prompt = self.focused_block {
+                    scroll = 0;
+                }
+
+                Paragraph::new(messages)
+                    .scroll((scroll as u16, 0))
+                    .wrap(Wrap { trim: false })
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .style(Style::default())
+                            .border_type(BorderType::Rounded)
+                            .border_style(match self.focused_block {
+                                FocusedBlock::Chat => Style::default().fg(Color::Yellow),
+                                _ => Style::default(),
+                            }),
+                    )
+            } else {
+                Paragraph::new(messages).wrap(Wrap { trim: false }).block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .style(Style::default())
+                        .border_type(BorderType::Rounded)
+                        .border_style(match self.focused_block {
+                            FocusedBlock::Chat => Style::default().fg(Color::Yellow),
+                            _ => Style::default(),
+                        }),
+                )
+            }
+        };
+
+        // Mode blokc
         let mode = Paragraph::new({
             match self.mode {
                 Mode::Normal => "Mode: Normal",
                 Mode::Insert => "Mode: Insert",
             }
         })
-        .block(Block::default().borders(Borders::TOP));
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default())
+                .border_type(BorderType::Rounded),
+        );
+
+        // TODO: add popup to show help
 
         // Draw
-        frame.render_widget(container, vh_mid_area);
-        frame.render_widget(messages, assisstant_block);
-        frame.render_widget(input, user_block);
+        frame.render_widget(chat, assisstant_block);
+        frame.render_widget(prompt, user_block);
         frame.render_widget(mode, mode_block);
     }
 }
