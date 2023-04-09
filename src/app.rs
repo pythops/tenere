@@ -3,12 +3,14 @@ use std;
 use crossterm::event::KeyCode;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 use unicode_width::UnicodeWidthStr;
+
+use crate::gpt;
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -33,6 +35,8 @@ pub struct App {
     pub scroll: i32,
     pub previous_key: KeyCode,
     pub focused_block: FocusedBlock,
+    pub show_help_popup: bool,
+    pub gpt: gpt::GPT,
 }
 
 impl Default for App {
@@ -45,6 +49,8 @@ impl Default for App {
             scroll: 0,
             previous_key: KeyCode::Null,
             focused_block: FocusedBlock::Prompt,
+            show_help_popup: false,
+            gpt: gpt::GPT::new(),
         }
     }
 }
@@ -55,6 +61,32 @@ impl App {
     }
 
     pub fn tick(&self) {}
+
+    pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+        let popup_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Percentage((100 - percent_y) / 2),
+                    Constraint::Percentage(percent_y),
+                    Constraint::Percentage((100 - percent_y) / 2),
+                ]
+                .as_ref(),
+            )
+            .split(r);
+
+        Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Percentage((100 - percent_x) / 2),
+                    Constraint::Percentage(percent_x),
+                    Constraint::Percentage((100 - percent_x) / 2),
+                ]
+                .as_ref(),
+            )
+            .split(popup_layout[1])[1]
+    }
 
     pub fn render<B: Backend>(&mut self, frame: &mut Frame<'_, B>) {
         // Layout
@@ -75,7 +107,7 @@ impl App {
         let max_chat_height = app_area.height - max_prompt_height - 3;
         let chat_height = app_area.height - prompt_height - 3;
 
-        let (assisstant_block, user_block, mode_block) = {
+        let (chat_block, prompt_block, mode_block) = {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
@@ -116,7 +148,7 @@ impl App {
                             .style(Style::default())
                             .border_type(BorderType::Rounded)
                             .border_style(match self.focused_block {
-                                FocusedBlock::Prompt => Style::default().fg(Color::Yellow),
+                                FocusedBlock::Prompt => Style::default().fg(Color::Green),
                                 _ => Style::default(),
                             }),
                     )
@@ -130,7 +162,7 @@ impl App {
                             .style(Style::default())
                             .border_type(BorderType::Rounded)
                             .border_style(match self.focused_block {
-                                FocusedBlock::Prompt => Style::default().fg(Color::Yellow),
+                                FocusedBlock::Prompt => Style::default().fg(Color::Green),
                                 _ => Style::default(),
                             }),
                     )
@@ -142,16 +174,19 @@ impl App {
 
             // TODO: set the cursor position
             Mode::Insert => frame.set_cursor(
-                user_block.x + {
-                    let last_line = self.input.lines().last().unwrap_or("");
-                    let mut width = last_line.len() as u16;
-                    if last_line.len() as u16 > app_area.width {
-                        let last_word = last_line.rsplit(' ').last().unwrap_or("");
-                        width = last_line.width() as u16 % app_area.width + last_word.len() as u16;
+                prompt_block.x
+                    + {
+                        let last_line = self.input.lines().last().unwrap_or("");
+                        let mut width = last_line.len() as u16;
+                        if last_line.len() as u16 > app_area.width {
+                            let last_word = last_line.rsplit(' ').last().unwrap_or("");
+                            width =
+                                last_line.width() as u16 % app_area.width + last_word.len() as u16;
+                        }
+                        width
                     }
-                    width
-                },
-                user_block.y + self.input.lines().count() as u16,
+                    + 1,
+                prompt_block.y + prompt_height - 3,
             ),
         }
 
@@ -190,7 +225,7 @@ impl App {
                             .style(Style::default())
                             .border_type(BorderType::Rounded)
                             .border_style(match self.focused_block {
-                                FocusedBlock::Chat => Style::default().fg(Color::Yellow),
+                                FocusedBlock::Chat => Style::default().fg(Color::Green),
                                 _ => Style::default(),
                             }),
                     )
@@ -201,7 +236,7 @@ impl App {
                         .style(Style::default())
                         .border_type(BorderType::Rounded)
                         .border_style(match self.focused_block {
-                            FocusedBlock::Chat => Style::default().fg(Color::Yellow),
+                            FocusedBlock::Chat => Style::default().fg(Color::Green),
                             _ => Style::default(),
                         }),
                 )
@@ -225,8 +260,33 @@ impl App {
         // TODO: add popup to show help
 
         // Draw
-        frame.render_widget(chat, assisstant_block);
-        frame.render_widget(prompt, user_block);
+        frame.render_widget(chat, chat_block);
+        frame.render_widget(prompt, prompt_block);
         frame.render_widget(mode, mode_block);
+
+        if self.show_help_popup {
+            let help = "
+`i`: enter the Insert mode
+`Esc`: Go to Normal mode Or close the help popup
+`dd`: Clear the prompt
+`ctrl+l`: Clear the prompt and the chat
+`Tab`: Switch between the prompt and the chat
+`j`: Scroll down
+`k`: Scroll up
+`q`: Quit the app
+`h`: show help
+            ";
+
+            let block = Paragraph::new(help).wrap(Wrap { trim: false }).block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(Style::default())
+                    .border_type(BorderType::Rounded)
+                    .border_style(Style::default().fg(Color::Yellow)),
+            );
+            let area = Self::centered_rect(75, 25, app_area);
+            frame.render_widget(Clear, area); //this clears out the background
+            frame.render_widget(block, area);
+        }
     }
 }

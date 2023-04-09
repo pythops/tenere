@@ -1,16 +1,16 @@
 use crate::app::{App, AppResult, FocusedBlock, Mode};
-// #[allow(unused_imports)]
-// use crate::gpt;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
     match app.mode {
         Mode::Normal => match key_event.code {
+            // Change mode to Insert
             KeyCode::Char('i') => {
                 app.mode = Mode::Insert;
                 app.focused_block = FocusedBlock::Prompt;
             }
 
+            // Quit the app
             KeyCode::Char('q') => {
                 app.running = false;
             }
@@ -22,16 +22,13 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
                 if user_input.is_empty() {
                     return Ok(());
                 }
-
-                // let assisstant_message = gpt::ask_gpt(&user_input).await?;
-
                 app.messages.push(format!(" : {}\n", user_input));
-                app.messages.push(format!("🪄: {}\n", "hello ".repeat(100)));
-                // app.messages.push(format!("🪄: hellow \n world\n"));
-                // app.messages.push(format!("🪄: {}", assisstant_message));
-                app.messages.push("\n".to_string());
 
-                app.scroll = 0;
+                let assisstant_message =
+                    app.gpt.ask(user_input).await.unwrap_or("Error".to_string());
+                app.messages.push(format!("🪄: {}\n", assisstant_message));
+
+                app.messages.push("\n".to_string());
             }
 
             // scroll down
@@ -44,12 +41,15 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
                 app.scroll -= 1;
             }
 
+            // Clear the prompt
             KeyCode::Char('d') => {
                 if app.previous_key == KeyCode::Char('d') {
                     app.input = String::from(">_ ");
                     app.scroll = 0;
                 }
             }
+
+            // Clear the prompt and the chat
             KeyCode::Char('l') => {
                 if key_event.modifiers == KeyModifiers::CONTROL {
                     app.input = String::from(">_ ");
@@ -58,14 +58,27 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
                 }
             }
 
+            // Switch the focus
             KeyCode::Tab => match app.focused_block {
                 FocusedBlock::Chat => app.focused_block = FocusedBlock::Prompt,
                 FocusedBlock::Prompt => app.focused_block = FocusedBlock::Chat,
             },
 
+            // kill the app
             KeyCode::Char('c') | KeyCode::Char('C') => {
                 if key_event.modifiers == KeyModifiers::CONTROL {
                     app.running = false;
+                }
+            }
+
+            // Help popup
+            KeyCode::Char('h') => {
+                app.show_help_popup = true;
+            }
+
+            KeyCode::Esc => {
+                if app.show_help_popup {
+                    app.show_help_popup = false;
                 }
             }
 
