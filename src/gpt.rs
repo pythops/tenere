@@ -7,12 +7,19 @@ pub struct GPT {
     client: reqwest::Client,
 }
 
-impl GPT {
-    pub fn new() -> Self {
+impl Default for GPT {
+    fn default() -> Self {
         Self {
             client: reqwest::Client::new(),
         }
     }
+}
+
+impl GPT {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub async fn ask(&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
         let url = "https://api.openai.com/v1/chat/completions";
         let token =
