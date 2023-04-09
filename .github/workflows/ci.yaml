@@ -1,0 +1,33 @@
+---
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "!*"
+name: Test
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: taiki-e/install-action@just
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          component: clippy rustfmt
+
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run linting
+        run: just lint
+
+      - name: Run tests
+        run: just test
+
+      - name: Run debug builds
+        run: just build
