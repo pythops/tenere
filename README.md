@@ -1,51 +1,67 @@
 <div align="center">
   <h1> Tenere </h1>
   <img src="assets/logo.png" alt="A crab in the moroccan desert"></img>
+  <h2> ChatGPT TUI interface built in Rust </h2>
 </div>
 
 ## Demo
 
-## Setup
+## Download
 
-You can download the prebuilt binaries in the release page.
+You can download the prebuilt binaries from the release page.
 
-Otherwise you can build it using cargo
+## Building
 
+Building from source requires [Rust](https://www.rust-lang.org/) compiler and
+[Cargo package manager](https://doc.rust-lang.org/cargo/).
+
+Once Rust and Cargo are installed, run the following command to build:
+
+```bash
+cargo build --release
 ```
-$ git clone https://github.com/pythops/tenere
-$ cd tenere
-$ cargo run
-```
+
+This will produce an executable file at `target/release/tenere` that you can copy to a directory in your `$PATH`.
 
 ## Usage
 
-You need to export the API key for openai
+You need to export the **API key** from OpenAI first.
 
 ```
 $ export OPENAI_API_KEY=<YOUTR KEY HERE>
 ```
 
-Here are the available keys:
+There are two modes like vim: `Normal` and `Insert`.
 
-`i`: Enter the Insert mode so you can start typing.
+#### Insert mode
 
-`Esc`: Switch to Noral mode.
+To enter `Insert` mode, You press `i`. Once you're in, you can use:
 
-`Enter`: Submit the prompt
+`Esc`: to switch back to Normal mode.
 
-`dd`: Clear the prompt
+`Enter`: to create a new line
 
-`ctrl+l`: Clear the prompt and the chat
+`Backspace`: to remove the previous character
 
-`Tab`: Switch between the prompt block and the chat block.
+#### Normal mode
 
-`j`: Scroll down
+When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you can use:
 
-`k`: Scroll up
+`Enter`: to submit the prompt
 
-`q`: Quit
+`dd`: to clear the prompt.
 
-`h`: Show the help popup. You can dismiss the popup with `Esc`
+`ctrl+l`: to clear the prompt **AND** the chat.
+
+`Tab`: to switch between the prompt and the chat history.
+
+`j`: to scroll down
+
+`k`: to scroll up
+
+`q`: to quit the app
+
+`h`: to show the help popup. You can dismiss the popup with `Esc`
 
 ## License
 
