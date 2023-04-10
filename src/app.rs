@@ -212,8 +212,8 @@ impl App {
         // Mode blokc
         let mode = Paragraph::new({
             match self.mode {
-                Mode::Normal => format!("Mode: Normal | {}", self.scroll),
-                Mode::Insert => "Mode: Insert".to_string(),
+                Mode::Normal => "Mode: Normal",
+                Mode::Insert => "Mode: Insert",
             }
         })
         .block(
