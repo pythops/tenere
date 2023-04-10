@@ -1,5 +1,6 @@
 use crate::app::{App, AppResult};
 use crate::event::EventHandler;
+use crossterm::cursor::EnableBlinking;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use std::io;
@@ -19,7 +20,12 @@ impl<B: Backend> Tui<B> {
 
     pub fn init(&mut self) -> AppResult<()> {
         terminal::enable_raw_mode()?;
-        crossterm::execute!(io::stderr(), EnterAlternateScreen, EnableMouseCapture)?;
+        crossterm::execute!(
+            io::stderr(),
+            EnterAlternateScreen,
+            EnableMouseCapture,
+            EnableBlinking,
+        )?;
         self.terminal.hide_cursor()?;
         self.terminal.clear()?;
         Ok(())
