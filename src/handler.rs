@@ -76,6 +76,7 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
                 app.show_help_popup = true;
             }
 
+            // Discard help popup
             KeyCode::Esc => {
                 if app.show_help_popup {
                     app.show_help_popup = false;
@@ -86,16 +87,21 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
         },
 
         Mode::Insert => match key_event.code {
+            // New line
             KeyCode::Enter => app.input.push('\n'),
 
             KeyCode::Char(c) => {
                 app.input.push(c);
             }
+
+            // Remove char from the prompt
             KeyCode::Backspace => {
                 if app.input.len() > 3 {
                     app.input.pop();
                 }
             }
+
+            //Switch to Normal mode
             KeyCode::Esc => {
                 app.mode = Mode::Normal;
             }

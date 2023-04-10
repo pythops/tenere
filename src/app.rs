@@ -257,8 +257,6 @@ impl App {
                 .border_type(BorderType::Rounded),
         );
 
-        // TODO: add popup to show help
-
         // Draw
         frame.render_widget(chat, chat_block);
         frame.render_widget(prompt, prompt_block);
@@ -267,10 +265,10 @@ impl App {
         if self.show_help_popup {
             let help = "
 `i`      : Switch to Insert mode
-`Esc`    : Switch to Noram mode
+`Esc`    : Switch to Normal mode
 `dd`     : Clear the prompt
 `ctrl+l` : Clear the prompt AND the chat
-`Tab`    : Switch between the prompt block and the chat block
+`Tab`    : Switch between the prompt and the chat history
 `j`      : Scroll down
 `k`      : Scroll up
 `q`      : Quit
