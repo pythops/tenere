@@ -11,7 +11,7 @@ async fn main() -> AppResult<()> {
     match env::var("OPENAI_API_KEY") {
         Ok(_) => {}
         Err(_) => {
-            eprintln!("Error: OPENAI_API_KEY environment variable is not set");
+            eprintln!("OPENAI_API_KEY environment variable is not set");
             std::process::exit(1);
         }
     }
