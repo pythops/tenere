@@ -53,14 +53,15 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
 
             // scroll up
             KeyCode::Char('k') => {
-                app.scroll -= 1;
+                if app.scroll > 0 {
+                    app.scroll -= 1;
+                }
             }
 
             // Clear the prompt
             KeyCode::Char('d') => {
                 if app.previous_key == KeyCode::Char('d') {
                     app.input = String::from(">_ ");
-                    app.scroll = 0;
                 }
             }
 
@@ -75,10 +76,13 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
             }
 
             // Switch the focus
-            KeyCode::Tab => match app.focused_block {
-                FocusedBlock::Chat => app.focused_block = FocusedBlock::Prompt,
-                FocusedBlock::Prompt => app.focused_block = FocusedBlock::Chat,
-            },
+            KeyCode::Tab => {
+                match app.focused_block {
+                    FocusedBlock::Chat => app.focused_block = FocusedBlock::Prompt,
+                    FocusedBlock::Prompt => app.focused_block = FocusedBlock::Chat,
+                }
+                app.scroll = 0
+            }
 
             // kill the app
             KeyCode::Char('c') | KeyCode::Char('C') => {

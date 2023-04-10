@@ -127,49 +127,27 @@ impl App {
 
         // prompt block
         //TODO: show scroll bar
-        //TODO: Make scroll stops when reaches the top or the bottom
         let prompt = {
-            if prompt_height > max_prompt_height {
-                let mut scroll: i32 =
-                    prompt_height as i32 - max_prompt_height as i32 + 2 + self.scroll;
-                if scroll < 0 {
-                    scroll = 0;
-                    self.scroll = 0;
+            let mut scroll = 0;
+            if let FocusedBlock::Prompt = self.focused_block {
+                if prompt_height as i32 - max_prompt_height as i32 + self.scroll >= 0 {
+                    scroll = self.scroll;
                 }
-
-                println!("{}, {}", scroll, self.scroll);
-                if let FocusedBlock::Chat = self.focused_block {
-                    scroll = 0;
-                }
-
-                Paragraph::new(self.input.as_ref())
-                    .wrap(Wrap { trim: false })
-                    .scroll((scroll as u16, 0))
-                    .block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .style(Style::default())
-                            .border_type(BorderType::Rounded)
-                            .border_style(match self.focused_block {
-                                FocusedBlock::Prompt => Style::default().fg(Color::Green),
-                                _ => Style::default(),
-                            }),
-                    )
-            } else {
-                Paragraph::new(self.input.as_ref())
-                    .wrap(Wrap { trim: false })
-                    .style(Style::default())
-                    .block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .style(Style::default())
-                            .border_type(BorderType::Rounded)
-                            .border_style(match self.focused_block {
-                                FocusedBlock::Prompt => Style::default().fg(Color::Green),
-                                _ => Style::default(),
-                            }),
-                    )
             }
+            Paragraph::new(self.input.as_ref())
+                .wrap(Wrap { trim: false })
+                .scroll((scroll as u16, 0))
+                .style(Style::default())
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .style(Style::default())
+                        .border_type(BorderType::Rounded)
+                        .border_style(match self.focused_block {
+                            FocusedBlock::Prompt => Style::default().fg(Color::Green),
+                            _ => Style::default(),
+                        }),
+                )
         };
 
         match self.mode {
@@ -209,31 +187,17 @@ impl App {
                 height
             };
 
-            if messages_height > chat_height {
-                let mut scroll = messages_height as i32 - chat_height as i32 + self.scroll;
-                if scroll < 0 {
-                    scroll = 0;
-                    self.scroll = 0;
+            let mut scroll = 0;
+            if let FocusedBlock::Chat = self.focused_block {
+                if messages_height as i32 - chat_height as i32 + self.scroll >= 0 {
+                    scroll = self.scroll;
                 }
-                if let FocusedBlock::Prompt = self.focused_block {
-                    scroll = 0;
-                }
+            }
 
-                Paragraph::new(messages)
-                    .scroll((scroll as u16, 0))
-                    .wrap(Wrap { trim: false })
-                    .block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .style(Style::default())
-                            .border_type(BorderType::Rounded)
-                            .border_style(match self.focused_block {
-                                FocusedBlock::Chat => Style::default().fg(Color::Green),
-                                _ => Style::default(),
-                            }),
-                    )
-            } else {
-                Paragraph::new(messages).wrap(Wrap { trim: false }).block(
+            Paragraph::new(messages)
+                .scroll((scroll as u16, 0))
+                .wrap(Wrap { trim: false })
+                .block(
                     Block::default()
                         .borders(Borders::ALL)
                         .style(Style::default())
@@ -243,14 +207,13 @@ impl App {
                             _ => Style::default(),
                         }),
                 )
-            }
         };
 
         // Mode blokc
         let mode = Paragraph::new({
             match self.mode {
-                Mode::Normal => "Mode: Normal",
-                Mode::Insert => "Mode: Insert",
+                Mode::Normal => format!("Mode: Normal | {}", self.scroll),
+                Mode::Insert => "Mode: Insert".to_string(),
             }
         })
         .block(
