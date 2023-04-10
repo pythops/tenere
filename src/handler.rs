@@ -1,5 +1,6 @@
 use crate::app::{App, AppResult, FocusedBlock, Mode};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use std::collections::HashMap;
 
 pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
     match app.mode {
@@ -17,6 +18,8 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
 
             // TODO: handle shift + enter. Limitation from crossterm
             KeyCode::Enter => {
+                let mut conv: HashMap<String, String> = HashMap::new();
+
                 let user_input: String = app.input.drain(3..).collect();
                 let user_input = user_input.trim();
                 if user_input.is_empty() {
@@ -24,11 +27,23 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
                 }
                 app.messages.push(format!(" : {}\n", user_input));
 
-                let assisstant_message =
-                    app.gpt.ask(user_input).await.unwrap_or("Error".to_string());
-                app.messages.push(format!("🪄: {}\n", assisstant_message));
+                conv.insert("role".to_string(), "user".to_string());
+                conv.insert("content".to_string(), user_input.to_string());
+                app.history.push(conv.clone());
+
+                let assisstant_message = match app.gpt.ask(app.history.clone()).await {
+                    Ok(answer) => {
+                        conv.insert("role".to_string(), "user".to_string());
+                        conv.insert("content".to_string(), answer.clone());
+                        answer
+                    }
+                    Err(_) => "Error".to_string(),
+                };
+
+                app.messages.push(format!("🤖: {}\n", assisstant_message));
 
                 app.messages.push("\n".to_string());
+                app.history.push(conv);
             }
 
             // scroll down
@@ -54,6 +69,7 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
                 if key_event.modifiers == KeyModifiers::CONTROL {
                     app.input = String::from(">_ ");
                     app.messages = Vec::new();
+                    app.history = Vec::new();
                     app.scroll = 0;
                 }
             }

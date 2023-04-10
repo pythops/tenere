@@ -1,6 +1,7 @@
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct GPT {
@@ -20,10 +21,13 @@ impl GPT {
         Self::default()
     }
 
-    pub async fn ask(&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn ask(
+        &self,
+        chat_messages: Vec<HashMap<String, String>>,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let url = "https://api.openai.com/v1/chat/completions";
-        let token =
-            std::env::var("OPENAI_API_KEY").expect("Can not find the OPENAI_API_KEY env variable");
+        let token = std::env::var("OPENAI_API_KEY")
+            .expect("OPENAI_API_KEY environment variable is not set");
 
         let mut headers = HeaderMap::new();
         headers.insert("Content-Type", "application/json".parse().unwrap());
@@ -32,12 +36,21 @@ impl GPT {
             format!("Bearer {}", token).parse().unwrap(),
         );
 
+        let mut messages: Vec<HashMap<String, String>> = vec![
+            (HashMap::from([
+                ("role".to_string(), "system".to_string()),
+                (
+                    "content".to_string(),
+                    "You are a helpful assistant.".to_string(),
+                ),
+            ])),
+        ];
+
+        messages.extend(chat_messages);
+
         let body: Value = json!({
             "model": "gpt-3.5-turbo",
-            "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ]
+            "messages": messages
         });
 
         let response = self

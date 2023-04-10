@@ -1,4 +1,5 @@
 use std;
+use std::collections::HashMap;
 
 use crossterm::event::KeyCode;
 use tui::{
@@ -37,6 +38,7 @@ pub struct App {
     pub focused_block: FocusedBlock,
     pub show_help_popup: bool,
     pub gpt: gpt::GPT,
+    pub history: Vec<HashMap<String, String>>,
 }
 
 impl Default for App {
@@ -51,6 +53,7 @@ impl Default for App {
             focused_block: FocusedBlock::Prompt,
             show_help_popup: false,
             gpt: gpt::GPT::new(),
+            history: Vec::new(),
         }
     }
 }
@@ -190,7 +193,7 @@ impl App {
             ),
         }
 
-        // Messages block
+        // Chat block
         let chat = {
             let messages: String = self.messages.iter().map(|m| m.to_string()).collect();
 
