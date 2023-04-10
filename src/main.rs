@@ -1,4 +1,4 @@
-use std::io;
+use std::{env, io};
 use tenere::app::{App, AppResult};
 use tenere::event::{Event, EventHandler};
 use tenere::handler::handle_key_events;
@@ -8,6 +8,13 @@ use tui::Terminal;
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
+    match env::var("OPENAI_API_KEY") {
+        Ok(_) => {}
+        Err(_) => {
+            eprintln!("Error: OPENAI_API_KEY environment variable is not set");
+            std::process::exit(1);
+        }
+    }
     let mut app = App::new();
 
     let backend = CrosstermBackend::new(io::stderr());

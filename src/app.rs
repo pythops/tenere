@@ -266,15 +266,15 @@ impl App {
 
         if self.show_help_popup {
             let help = "
-`i`: enter the Insert mode
-`Esc`: Go to Normal mode Or close the help popup
-`dd`: Clear the prompt
-`ctrl+l`: Clear the prompt and the chat
-`Tab`: Switch between the prompt and the chat
-`j`: Scroll down
-`k`: Scroll up
-`q`: Quit the app
-`h`: show help
+`i`      : Switch to Insert mode
+`Esc`    : Switch to Noram mode
+`dd`     : Clear the prompt
+`ctrl+l` : Clear the prompt AND the chat
+`Tab`    : Switch between the prompt block and the chat block
+`j`      : Scroll down
+`k`      : Scroll up
+`q`      : Quit
+`h`      : show help
             ";
 
             let block = Paragraph::new(help).wrap(Wrap { trim: false }).block(
