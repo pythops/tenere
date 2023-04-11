@@ -1,8 +1,18 @@
-use crate::app::{App, AppResult, FocusedBlock, Mode};
+use crate::{
+    app::{App, AppResult, FocusedBlock, Mode},
+    event::Event,
+    gpt::GPT,
+};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::collections::HashMap;
+use std::sync::mpsc::Sender;
+use std::{collections::HashMap, thread};
 
-pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
+pub fn handle_key_events(
+    key_event: KeyEvent,
+    app: &mut App,
+    gpt: &GPT,
+    sender: Sender<Event>,
+) -> AppResult<()> {
     match app.mode {
         Mode::Normal => match key_event.code {
             // Change mode to Insert
@@ -31,19 +41,13 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
                 conv.insert("content".to_string(), user_input.to_string());
                 app.history.push(conv.clone());
 
-                let assisstant_message = match app.gpt.ask(app.history.clone()).await {
-                    Ok(answer) => {
-                        conv.insert("role".to_string(), "user".to_string());
-                        conv.insert("content".to_string(), answer.clone());
-                        answer
-                    }
-                    Err(_) => "Error".to_string(),
-                };
-
-                app.messages.push(format!("🤖: {}\n", assisstant_message));
-
-                app.messages.push("\n".to_string());
-                app.history.push(conv);
+                let history = app.history.clone();
+                let sender = sender.clone();
+                let gpt = gpt.clone();
+                thread::spawn(move || {
+                    let response = gpt.ask(history).unwrap();
+                    sender.send(Event::GPTResponse(response)).unwrap();
+                });
             }
 
             // scroll down
