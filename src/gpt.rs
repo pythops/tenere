@@ -1,9 +1,10 @@
+use crate::app::AppResult;
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct GPT {
     client: reqwest::Client,
 }

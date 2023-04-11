@@ -4,18 +4,19 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Event {
     Tick,
     Key(KeyEvent),
     Mouse(MouseEvent),
     Resize(u16, u16),
+    GPTResponse(String),
 }
 
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct EventHandler {
-    sender: mpsc::Sender<Event>,
+    pub sender: mpsc::Sender<Event>,
     receiver: mpsc::Receiver<Event>,
     handler: thread::JoinHandle<()>,
 }
