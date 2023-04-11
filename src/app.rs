@@ -11,8 +11,6 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::gpt;
-
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug)]
@@ -37,7 +35,6 @@ pub struct App {
     pub previous_key: KeyCode,
     pub focused_block: FocusedBlock,
     pub show_help_popup: bool,
-    pub gpt: gpt::GPT,
     pub history: Vec<HashMap<String, String>>,
 }
 
@@ -52,7 +49,6 @@ impl Default for App {
             previous_key: KeyCode::Null,
             focused_block: FocusedBlock::Prompt,
             show_help_popup: false,
-            gpt: gpt::GPT::new(),
             history: Vec::new(),
         }
     }
