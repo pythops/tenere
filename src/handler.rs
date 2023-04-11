@@ -53,9 +53,7 @@ pub async fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<
 
             // scroll up
             KeyCode::Char('k') => {
-                if app.scroll > 0 {
-                    app.scroll -= 1;
-                }
+                app.scroll -= 1;
             }
 
             // Clear the prompt

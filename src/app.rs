@@ -129,9 +129,21 @@ impl App {
         //TODO: show scroll bar
         let prompt = {
             let mut scroll = 0;
+            let height_diff = prompt_height as i32 - max_prompt_height as i32;
             if let FocusedBlock::Prompt = self.focused_block {
-                if prompt_height as i32 - max_prompt_height as i32 + self.scroll >= 0 {
-                    scroll = self.scroll;
+                if height_diff + self.scroll >= 0 {
+                    scroll = height_diff + self.scroll;
+                }
+
+                // scroll up case
+                if height_diff > 0 && -self.scroll > height_diff {
+                    self.scroll = -height_diff;
+                }
+
+                // Scroll down case
+                // 2 empty lines
+                if height_diff > 0 && self.scroll >= 2 {
+                    self.scroll = 2
                 }
             }
             Paragraph::new(self.input.as_ref())
@@ -167,7 +179,7 @@ impl App {
                         width
                     }
                     + 1,
-                prompt_block.y + prompt_height - 3,
+                prompt_block.y + std::cmp::min(prompt_height, max_prompt_height) - 3,
             ),
         }
 
@@ -188,9 +200,23 @@ impl App {
             };
 
             let mut scroll = 0;
+            let height_diff = messages_height as i32 - chat_height as i32;
+            if height_diff > 0 {
+                scroll = height_diff;
+            }
             if let FocusedBlock::Chat = self.focused_block {
-                if messages_height as i32 - chat_height as i32 + self.scroll >= 0 {
-                    scroll = self.scroll;
+                if height_diff + self.scroll >= 0 {
+                    scroll = height_diff + self.scroll;
+                }
+
+                // // scroll up case
+                if height_diff > 0 && -self.scroll > height_diff {
+                    self.scroll = -height_diff;
+                }
+                //
+                // // Scroll down case
+                if height_diff > 0 && self.scroll > 0 {
+                    self.scroll = 0;
                 }
             }
 
