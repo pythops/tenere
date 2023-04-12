@@ -8,8 +8,7 @@ use tenere::tui::Tui;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
-#[tokio::main]
-async fn main() -> AppResult<()> {
+fn main() -> AppResult<()> {
     match env::var("OPENAI_API_KEY") {
         Ok(_) => {}
         Err(_) => {

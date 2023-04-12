@@ -42,10 +42,9 @@ pub fn handle_key_events(
                 app.history.push(conv.clone());
 
                 let history = app.history.clone();
-                let sender = sender.clone();
                 let gpt = gpt.clone();
                 thread::spawn(move || {
-                    let response = gpt.ask(history).unwrap();
+                    let response = gpt.ask(history).unwrap_or("Error".to_string());
                     sender.send(Event::GPTResponse(response)).unwrap();
                 });
             }
