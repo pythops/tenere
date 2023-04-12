@@ -47,6 +47,7 @@ pub fn handle_key_events(
                     let response = gpt.ask(history).unwrap_or("Error".to_string());
                     sender.send(Event::GPTResponse(response)).unwrap();
                 });
+                app.messages.push("🤖: Waiting ...".to_string());
             }
 
             // scroll down
