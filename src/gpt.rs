@@ -1,4 +1,3 @@
-use crate::app::AppResult;
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
@@ -6,13 +5,13 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct GPT {
-    client: reqwest::Client,
+    client: reqwest::blocking::Client,
 }
 
 impl Default for GPT {
     fn default() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::blocking::Client::new(),
         }
     }
 }
@@ -22,7 +21,7 @@ impl GPT {
         Self::default()
     }
 
-    pub async fn ask(
+    pub fn ask(
         &self,
         chat_messages: Vec<HashMap<String, String>>,
     ) -> Result<String, Box<dyn std::error::Error>> {
@@ -54,15 +53,9 @@ impl GPT {
             "messages": messages
         });
 
-        let response = self
-            .client
-            .post(url)
-            .headers(headers)
-            .json(&body)
-            .send()
-            .await?;
+        let response = self.client.post(url).headers(headers).json(&body).send()?;
 
-        let response_body: Value = response.json().await?;
+        let response_body: Value = response.json()?;
 
         let answer = response_body["choices"][0]["message"]["content"]
             .as_str()
