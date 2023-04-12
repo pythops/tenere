@@ -4,15 +4,13 @@
   <h2> ChatGPT TUI interface built in Rust </h2>
 </div>
 
-## Demo
+## 📸 Demo
 
-## Download
+## ⚙️ Installation
 
 You can download the prebuilt binaries from the release page.
 
-## Building
-
-Building from source requires [Rust](https://www.rust-lang.org/) compiler and
+Otherwise, you can build from source. This requires [Rust](https://www.rust-lang.org/) compiler and
 [Cargo package manager](https://doc.rust-lang.org/cargo/).
 
 Once Rust and Cargo are installed, run the following command to build:
@@ -23,13 +21,15 @@ cargo build --release
 
 This will produce an executable file at `target/release/tenere` that you can copy to a directory in your `$PATH`.
 
-## Usage
+## ⚡ Requirements
 
 You need to export the **API key** from OpenAI first.
 
+```bash
+export OPENAI_API_KEY="YOUTR KEY HERE"
 ```
-$ export OPENAI_API_KEY=<YOUTR KEY HERE>
-```
+
+## 🚀 Usage
 
 There are two modes like vim: `Normal` and `Insert`.
 
@@ -53,7 +53,7 @@ When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you 
 
 `ctrl+l`: to clear the prompt **AND** the chat.
 
-`Tab`: to switch between the prompt and the chat history.
+`Tab`: to switch the focus between the prompt and the chat history.
 
 `j`: to scroll down
 
@@ -63,6 +63,10 @@ When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you 
 
 `h`: to show the help popup. You can dismiss the popup with `Esc`
 
-## License
+## 🙏 Acknowledgments
+
+Big thanks to [@orhun](https://github.com/orhun) and [@sophacles](https://github.com/sophacles) for their precious help 🙏
+
+## ⚖️ License
 
 AGPLv3
