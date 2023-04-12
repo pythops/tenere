@@ -35,6 +35,7 @@ fn main() -> AppResult<()> {
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
             Event::GPTResponse(response) => {
+                app.messages.pop();
                 app.messages.push(format!("🤖: {}\n", response));
                 app.messages.push("\n".to_string());
                 let mut conv: HashMap<String, String> = HashMap::new();
