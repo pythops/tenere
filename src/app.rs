@@ -262,7 +262,7 @@ impl App {
 `Esc`    : Switch to Normal mode
 `dd`     : Clear the prompt
 `ctrl+l` : Clear the prompt AND the chat
-`Tab`    : Switch between the prompt and the chat history
+`Tab`    : Switch the focus between the prompt and the chat history
 `j`      : Scroll down
 `k`      : Scroll up
 `q`      : Quit
