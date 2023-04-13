@@ -55,14 +55,18 @@ impl GPT {
 
         let response = self.client.post(url).headers(headers).json(&body).send()?;
 
-        let response_body: Value = response.json()?;
+        match response.error_for_status() {
+            Ok(res) => {
+                let response_body: Value = res.json()?;
+                let answer = response_body["choices"][0]["message"]["content"]
+                    .as_str()
+                    .unwrap()
+                    .trim_matches('"')
+                    .to_string();
 
-        let answer = response_body["choices"][0]["message"]["content"]
-            .as_str()
-            .unwrap()
-            .trim_matches('"')
-            .to_string();
-
-        Ok(answer)
+                Ok(answer)
+            }
+            Err(e) => Err(Box::new(e)),
+        }
     }
 }

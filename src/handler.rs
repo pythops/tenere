@@ -44,8 +44,13 @@ pub fn handle_key_events(
                 let history = app.history.clone();
                 let gpt = gpt.clone();
                 thread::spawn(move || {
-                    let response = gpt.ask(history).unwrap_or("Error".to_string());
-                    sender.send(Event::GPTResponse(response)).unwrap();
+                    let response = gpt.ask(history);
+                    sender
+                        .send(Event::GPTResponse(match response {
+                            Ok(answer) => answer,
+                            Err(e) => e.to_string(),
+                        }))
+                        .unwrap();
                 });
                 app.messages.push("🤖: Waiting ...".to_string());
             }
