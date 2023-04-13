@@ -1,3 +1,4 @@
+use ansi_to_tui::IntoText;
 use std;
 use std::collections::HashMap;
 
@@ -6,6 +7,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
+    text::Text,
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
@@ -219,22 +221,27 @@ impl App {
                 }
             }
 
-            Paragraph::new(messages)
-                .scroll((scroll as u16, 0))
-                .wrap(Wrap { trim: false })
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .style(Style::default())
-                        .border_type(match self.focused_block {
-                            FocusedBlock::Chat => BorderType::Thick,
-                            _ => BorderType::Rounded,
-                        })
-                        .border_style(match self.focused_block {
-                            FocusedBlock::Chat => Style::default().fg(Color::Green),
-                            _ => Style::default(),
-                        }),
-                )
+            Paragraph::new({
+                termimad::inline(messages.as_str())
+                    .to_string()
+                    .into_text()
+                    .unwrap_or(Text::from(messages))
+            })
+            .scroll((scroll as u16, 0))
+            .wrap(Wrap { trim: false })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(Style::default())
+                    .border_type(match self.focused_block {
+                        FocusedBlock::Chat => BorderType::Thick,
+                        _ => BorderType::Rounded,
+                    })
+                    .border_style(match self.focused_block {
+                        FocusedBlock::Chat => Style::default().fg(Color::Green),
+                        _ => Style::default(),
+                    }),
+            )
         };
 
         // Mode blokc
