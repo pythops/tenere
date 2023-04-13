@@ -6,6 +6,8 @@
 
 ## 📸 Demo
 
+<br>
+
 ## ⚙️ Installation
 
 You can download the prebuilt binaries from the release page.
@@ -21,6 +23,8 @@ cargo build --release
 
 This will produce an executable file at `target/release/tenere` that you can copy to a directory in your `$PATH`.
 
+<br>
+
 ## ⚡ Requirements
 
 You need to export the **API key** from OpenAI first.
@@ -28,6 +32,8 @@ You need to export the **API key** from OpenAI first.
 ```bash
 export OPENAI_API_KEY="YOUTR KEY HERE"
 ```
+
+<br>
 
 ## 🚀 Usage
 
@@ -63,9 +69,21 @@ When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you 
 
 `h`: to show the help popup. You can dismiss the popup with `Esc`
 
+<br>
+
+## 🛠️ Built with
+
+- [ratatui](https://github.com/tui-rs-revival/ratatui)
+- [crossterm](https://github.com/crossterm-rs/crossterm)
+- [reqwest](https://github.com/seanmonstar/reqwest)
+
+<br>
+
 ## 🙏 Acknowledgments
 
 Big thanks to [@orhun](https://github.com/orhun) and [@sophacles](https://github.com/sophacles) for their precious help 🙏
+
+<br>
 
 ## ⚖️ License
 
