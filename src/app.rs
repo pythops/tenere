@@ -222,7 +222,7 @@ impl App {
             }
 
             Paragraph::new({
-                termimad::inline(messages.as_str())
+                termimad::term_text(messages.as_str())
                     .to_string()
                     .into_text()
                     .unwrap_or(Text::from(messages))
