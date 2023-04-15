@@ -1,10 +1,16 @@
 <div align="center">
   <h1> Tenere </h1>
   <img src="assets/logo.png" alt="A crab in the moroccan desert"></img>
-  <h2> ChatGPT TUI interface built in Rust </h2>
+  <h2> TUI interface for LLM built in Rust </h2>
 </div>
 
 ## 📸 Demo
+
+<br>
+
+## 💎 Supported LLM
+
+Only **ChatGPT** is supported for the moment. But I'm planning to support more in the furture.
 
 <br>
 
@@ -68,6 +74,14 @@ When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you 
 `q`: to quit the app
 
 `h`: to show the help popup. You can dismiss the popup with `Esc`
+
+<br>
+
+## 🧭 Roadmap
+
+- [ ] Highlight the chat messages
+- [ ] Show the scroll bar
+- [ ] Support LLaMA
 
 <br>
 
