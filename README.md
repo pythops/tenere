@@ -76,9 +76,9 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 
 `Tab`: to switch the focus between the prompt and the chat history.
 
-`j`: to scroll down
+`j` or `Down arrow key`: to scroll down
 
-`k`: to scroll up
+`k` or `Up arrow key`: to scroll up
 
 `q`: to quit the app
 
