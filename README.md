@@ -12,7 +12,7 @@
 
 ## 💎 Supported LLMs
 
-Only **ChatGPT** is supported for the moment. But I'm planning to support more in the furture.
+Only **ChatGPT** is supported for the moment. But I'm planning to support more models in the future.
 
 <br>
 
@@ -59,7 +59,7 @@ To enter `Insert` mode, You press `i`. Once you're in, you can use:
 
 #### Normal mode
 
-When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you can use:
+When you launch [tenere](), it's in `Normal` mode by default. In this mode, you can use:
 
 `Enter`: to submit the prompt
 
@@ -75,7 +75,7 @@ When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you 
 
 `q`: to quit the app
 
-`h`: to show the help popup. You can dismiss the popup with `Esc`
+`h`: to show the help pop-up. You can dismiss the pop-up with `Esc`
 
 <br>
 
@@ -83,7 +83,7 @@ When you launch [tenere](), it's in `Noraml` mode by default. In this mode, you 
 
 - [ ] Highlight the chat messages
 - [ ] Show the scroll bar
-- [ ] Support LLaMA
+- [ ] Support more models
 
 <br>
 
