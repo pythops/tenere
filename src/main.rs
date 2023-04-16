@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::{env, io};
 use tenere::app::{App, AppResult};
+use tenere::cli;
 use tenere::event::{Event, EventHandler};
 use tenere::gpt::GPT;
 use tenere::handler::handle_key_events;
@@ -8,7 +9,11 @@ use tenere::tui::Tui;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
+use clap::crate_version;
+
 fn main() -> AppResult<()> {
+    cli::cli().version(crate_version!()).get_matches();
+
     match env::var("OPENAI_API_KEY") {
         Ok(_) => {}
         Err(_) => {
