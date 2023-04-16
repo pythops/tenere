@@ -99,6 +99,7 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 - [ratatui](https://github.com/tui-rs-revival/ratatui)
 - [crossterm](https://github.com/crossterm-rs/crossterm)
 - [reqwest](https://github.com/seanmonstar/reqwest)
+- [clap](https://github.com/clap-rs/clap)
 
 <br>
 
