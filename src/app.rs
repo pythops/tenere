@@ -201,7 +201,10 @@ impl App {
             };
 
             let mut scroll = 0;
-            let height_diff = messages_height as i32 - chat_height as i32;
+            let height_diff = messages_height as i32
+                - std::cmp::max(chat_height, max_chat_height) as i32
+                - self.messages.len() as i32
+                + 1;
             if height_diff > 0 {
                 scroll = height_diff;
             }
