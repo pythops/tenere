@@ -1,14 +1,16 @@
 <div align="center">
   <h1> Tenere </h1>
   <img src="assets/logo.png" alt="A crab in the moroccan desert"></img>
-  <h2> TUI interface for LLM built in Rust </h2>
+  <h2> TUI interface for LLMs built in Rust </h2>
 </div>
 
 ## 📸 Demo
 
+![demo](assets/demo.gif)
+
 <br>
 
-## 💎 Supported LLM
+## 💎 Supported LLMs
 
 Only **ChatGPT** is supported for the moment. But I'm planning to support more in the furture.
 
