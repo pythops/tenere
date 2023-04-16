@@ -18,6 +18,13 @@ Only **ChatGPT** is supported for the moment. But I'm planning to support more m
 
 ## ⚙️ Installation
 
+### MacOS
+
+```bash
+brew tap pythops/tenere
+brew install tenere
+```
+
 You can download the prebuilt binaries from the release page.
 
 Otherwise, you can build from source. This requires [Rust](https://www.rust-lang.org/) compiler and
