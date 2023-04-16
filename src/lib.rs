@@ -7,3 +7,5 @@ pub mod tui;
 pub mod handler;
 
 pub mod gpt;
+
+pub mod cli;
