@@ -60,8 +60,16 @@ pub fn handle_key_events(
                 app.scroll += 1;
             }
 
+            KeyCode::Down => {
+                app.scroll += 1;
+            }
+
             // scroll up
             KeyCode::Char('k') => {
+                app.scroll -= 1;
+            }
+
+            KeyCode::Up => {
                 app.scroll -= 1;
             }
 
