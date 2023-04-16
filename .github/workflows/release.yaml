@@ -1,0 +1,61 @@
+---
+name: Release
+on:
+  push:
+    tags:
+      - "*"
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        rust: [stable]
+    permissions:
+      contents: write
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install just
+        uses: taiki-e/install-action@just
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Setup build env for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install -y musl-tools gcc
+          rustup target add x86_64-unknown-linux-musl
+
+      - name: Build for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          just build-release-linux
+          cp target/x86_64-unknown-linux-musl/release/tenere tenere-x86_64-linux-musl
+
+      - name: Build for macos
+        if: matrix.os == 'macos-latest'
+        run: |
+          rustup target add aarch64-apple-darwin
+          just build-release-macos
+          cp target/x86_64-apple-darwin/release/tenere tenere-x86_64-macos
+          cp target/aarch64-apple-darwin/release/tenere tenere-aarch64-macos
+
+      - name: Extract release notes
+        if: matrix.os == 'ubuntu-latest'
+        id: release_notes
+        uses: ffurrer2/extract-release-notes@v1
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.release_notes.outputs.release_notes }}
+          files: "tenere*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
