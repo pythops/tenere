@@ -96,7 +96,7 @@ impl App {
         // prompt height can grow till 40% of the frame height
         let max_prompt_height = (0.4 * app_area.height as f32) as u16;
         let prompt_height = {
-            let mut height: u16 = 3;
+            let mut height: u16 = 1;
             for line in self.input.lines() {
                 height += 1;
                 height += line.width() as u16 / app_area.width;
@@ -108,19 +108,19 @@ impl App {
         let max_chat_height = app_area.height - max_prompt_height - 3;
         let chat_height = app_area.height - prompt_height - 3;
 
-        let (chat_block, prompt_block, mode_block) = {
+        let (chat_block, prompt_block) = {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
                     [
                         Constraint::Length(std::cmp::max(chat_height, max_chat_height)),
                         Constraint::Length(std::cmp::min(prompt_height, max_prompt_height)),
-                        Constraint::Length(2),
+                        // Constraint::Length(2),
                     ]
                     .as_ref(),
                 )
                 .split(frame.size());
-            (chunks[0], chunks[1], chunks[2])
+            (chunks[0], chunks[1])
         };
 
         // prompt block
@@ -180,7 +180,7 @@ impl App {
                         width
                     }
                     + 1,
-                prompt_block.y + std::cmp::min(prompt_height, max_prompt_height) - 3,
+                prompt_block.y + std::cmp::min(prompt_height, max_prompt_height) - 1,
             ),
         }
 
@@ -247,24 +247,9 @@ impl App {
             )
         };
 
-        // Mode blokc
-        let mode = Paragraph::new({
-            match self.mode {
-                Mode::Normal => "Mode: Normal",
-                Mode::Insert => "Mode: Insert",
-            }
-        })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_style(Style::default())
-                .border_type(BorderType::Rounded),
-        );
-
         // Draw
         frame.render_widget(chat, chat_block);
         frame.render_widget(prompt, prompt_block);
-        frame.render_widget(mode, mode_block);
 
         if self.show_help_popup {
             let help = "
