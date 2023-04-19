@@ -157,7 +157,10 @@ impl App {
                             _ => BorderType::Rounded,
                         })
                         .border_style(match self.focused_block {
-                            FocusedBlock::Prompt => Style::default().fg(Color::Green),
+                            FocusedBlock::Prompt => match self.mode {
+                                Mode::Insert => Style::default().fg(Color::Green),
+                                Mode::Normal => Style::default().fg(Color::Yellow),
+                            },
                             _ => Style::default(),
                         }),
                 )
@@ -241,7 +244,10 @@ impl App {
                         _ => BorderType::Rounded,
                     })
                     .border_style(match self.focused_block {
-                        FocusedBlock::Chat => Style::default().fg(Color::Green),
+                        FocusedBlock::Chat => match self.mode {
+                            Mode::Insert => Style::default().fg(Color::Green),
+                            Mode::Normal => Style::default().fg(Color::Yellow),
+                        },
                         _ => Style::default(),
                     }),
             )
