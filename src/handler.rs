@@ -142,6 +142,7 @@ pub fn handle_key_events(
                 if app.show_history_popup {
                     app.show_history_popup = false;
                     app.focused_block = FocusedBlock::Prompt;
+                    app.scroll = 0;
                 }
             }
 
