@@ -40,13 +40,13 @@ fn main() -> AppResult<()> {
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
             Event::GPTResponse(response) => {
-                app.messages.pop();
-                app.messages.push(format!("🤖: {}\n", response));
-                app.messages.push("\n".to_string());
+                app.chat.pop();
+                app.chat.push(format!("🤖: {}\n", response));
+                app.chat.push("\n".to_string());
                 let mut conv: HashMap<String, String> = HashMap::new();
                 conv.insert("role".to_string(), "user".to_string());
                 conv.insert("content".to_string(), response.clone());
-                app.history.push(conv);
+                app.gpt_messages.push(conv);
             }
         }
     }

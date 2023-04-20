@@ -7,8 +7,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    text::Text,
-    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
+    text::{Span, Spans, Text},
+    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
 use unicode_width::UnicodeWidthStr;
@@ -25,33 +25,41 @@ pub enum Mode {
 pub enum FocusedBlock {
     Prompt,
     Chat,
+    History,
+    Preview,
 }
 
 #[derive(Debug)]
 pub struct App {
-    pub input: String,
+    pub prompt: String,
     pub mode: Mode,
     pub running: bool,
-    pub messages: Vec<String>,
+    pub chat: Vec<String>,
     pub scroll: i32,
     pub previous_key: KeyCode,
     pub focused_block: FocusedBlock,
     pub show_help_popup: bool,
-    pub history: Vec<HashMap<String, String>>,
+    pub gpt_messages: Vec<HashMap<String, String>>,
+    pub history: Vec<Vec<String>>,
+    pub show_history_popup: bool,
+    pub history_thread_index: usize,
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            input: String::from(">_ "),
+            prompt: String::from(">_ "),
             mode: Mode::Normal,
-            messages: Vec::new(),
+            chat: Vec::new(),
             scroll: 0,
             previous_key: KeyCode::Null,
             focused_block: FocusedBlock::Prompt,
             show_help_popup: false,
+            gpt_messages: Vec::new(),
             history: Vec::new(),
+            show_history_popup: false,
+            history_thread_index: 0,
         }
     }
 }
@@ -97,7 +105,7 @@ impl App {
         let max_prompt_height = (0.4 * app_area.height as f32) as u16;
         let prompt_height = {
             let mut height: u16 = 1;
-            for line in self.input.lines() {
+            for line in self.prompt.lines() {
                 height += 1;
                 height += line.width() as u16 / app_area.width;
             }
@@ -144,7 +152,7 @@ impl App {
                     self.scroll = 2
                 }
             }
-            Paragraph::new(self.input.as_ref())
+            Paragraph::new(self.prompt.as_ref())
                 .wrap(Wrap { trim: false })
                 .scroll((scroll as u16, 0))
                 .style(Style::default())
@@ -173,7 +181,7 @@ impl App {
             Mode::Insert => frame.set_cursor(
                 prompt_block.x
                     + {
-                        let last_line = self.input.lines().last().unwrap_or("");
+                        let last_line = self.prompt.lines().last().unwrap_or("");
                         let mut width = last_line.len() as u16;
                         if last_line.len() as u16 > app_area.width {
                             let last_word = last_line.rsplit(' ').last().unwrap_or("");
@@ -189,11 +197,11 @@ impl App {
 
         // Chat block
         let chat = {
-            let messages: String = self.messages.iter().map(|m| m.to_string()).collect();
+            let messages: String = self.chat.iter().map(|m| m.to_string()).collect();
 
             let messages_height = {
                 let mut height: u16 = 0;
-                for msg in &self.messages {
+                for msg in &self.chat {
                     height += 1;
                     for line in msg.lines() {
                         height += 1;
@@ -206,7 +214,7 @@ impl App {
             let mut scroll = 0;
             let height_diff = messages_height as i32
                 - std::cmp::max(chat_height, max_chat_height) as i32
-                - self.messages.len() as i32
+                - self.chat.len() as i32
                 + 1;
             if height_diff > 0 {
                 scroll = height_diff;
@@ -257,17 +265,126 @@ impl App {
         frame.render_widget(chat, chat_block);
         frame.render_widget(prompt, prompt_block);
 
+        if self.show_history_popup {
+            let area = Self::centered_rect(80, 80, app_area);
+
+            let (history_block, preview_block) = {
+                let chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                    .split(area);
+                (chunks[0], chunks[1])
+            };
+
+            let history = List::new({
+                if self.history.is_empty() {
+                    vec![ListItem::new(Spans::from(Span::from("History is empty")))]
+                } else {
+                    self.history
+                        .iter()
+                        .enumerate()
+                        .map(|(i, c)| {
+                            let msg = c[0].clone().strip_prefix(" : ").unwrap().to_string();
+                            let content = Spans::from(Span::from(msg));
+                            ListItem::new(content).style({
+                                if self.history_thread_index == i {
+                                    Style::default().bg(Color::Rgb(50, 54, 26))
+                                } else {
+                                    Style::default()
+                                }
+                            })
+                        })
+                        .collect::<Vec<ListItem>>()
+                }
+            })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(" History ")
+                    .title_alignment(tui::layout::Alignment::Center)
+                    .style(Style::default())
+                    .border_type(BorderType::Rounded)
+                    .border_style(match self.focused_block {
+                        FocusedBlock::History => Style::default().fg(Color::Yellow),
+                        _ => Style::default(),
+                    }),
+            );
+
+            let preview_chat: String = if !self.history.is_empty() {
+                self.history[self.history_thread_index]
+                    .iter()
+                    .map(|m| m.to_string())
+                    .collect()
+            } else {
+                String::new()
+            };
+
+            let preview_scroll = {
+                let mut height: u16 = 0;
+                let mut scroll: u16 = 0;
+                for line in preview_chat.lines() {
+                    height += 1;
+                    height += line.width() as u16 / preview_block.width;
+                }
+
+                let height_diff = height as i32 - preview_block.height as i32;
+
+                if height_diff > 0 {
+                    if let FocusedBlock::Preview = self.focused_block {
+                        if self.scroll < 0 {
+                            self.scroll = 0;
+                            scroll = self.scroll as u16;
+                        }
+                        if self.scroll > height_diff {
+                            self.scroll = height_diff;
+                            scroll = self.scroll as u16;
+                        }
+                        if self.scroll >= 0 {
+                            scroll = self.scroll as u16;
+                        }
+                    }
+                }
+                scroll
+            };
+
+            let preview = Paragraph::new({
+                termimad::term_text(preview_chat.as_str())
+                    .to_string()
+                    .into_text()
+                    .unwrap_or(Text::from(preview_chat))
+            })
+            .wrap(Wrap { trim: false })
+            .scroll((preview_scroll, 0))
+            .block(
+                Block::default()
+                    .title(" Preview ")
+                    .title_alignment(tui::layout::Alignment::Center)
+                    .borders(Borders::ALL)
+                    .style(Style::default())
+                    .border_type(BorderType::Rounded)
+                    .border_style(match self.focused_block {
+                        FocusedBlock::Preview => Style::default().fg(Color::Yellow),
+                        _ => Style::default(),
+                    }),
+            );
+
+            frame.render_widget(Clear, area); //this clears out the background
+            frame.render_widget(history, history_block);
+            frame.render_widget(preview, preview_block);
+        }
+
         if self.show_help_popup {
             let help = "
-`i`      : Switch to Insert mode
-`Esc`    : Switch to Normal mode
-`dd`     : Clear the prompt
-`ctrl+l` : Clear the prompt AND the chat
-`Tab`    : Switch the focus between the prompt and the chat history
-`j`      : Scroll down
-`k`      : Scroll up
-`q`      : Quit
-`h`      : show help
+`i`           : Switch to Insert mode
+`Esc`         : Switch to Normal mode
+`dd`          : Clear the prompt
+`ctrl+l`      : Clear the prompt AND the chat and save to history
+`Tab`         : Switch the focus
+`h`           : Show history
+`j` or `Down` : Scroll down
+`k` or `Up`   : Scroll up
+`?`           : show help
+`q`           : Quit
             ";
 
             let block = Paragraph::new(help).wrap(Wrap { trim: false }).block(
