@@ -72,9 +72,9 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 
 `dd`: to clear the prompt.
 
-`ctrl+l`: to clear the prompt **AND** the chat.
+`ctrl+l`: to clear the prompt **AND** the chat and save it to history.
 
-`Tab`: to switch the focus between the prompt and the chat history.
+`Tab`: to switch the focus.
 
 `j` or `Down arrow key`: to scroll down
 
@@ -84,7 +84,7 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 
 `q`: to quit the app
 
-`?`: to show the help pop-up. You can dismiss the pop-up with `Esc`
+`?`: to show the help pop-up. You can dismiss it with `Esc`
 
 <br>
 
