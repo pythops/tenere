@@ -1,7 +1,7 @@
 <div align="center">
   <h1> Tenere </h1>
   <img src="assets/logo.png" alt="A crab in the moroccan desert"></img>
-  <h2> TUI interface for LLMs built in Rust </h2>
+  <h2> TUI interface for LLMs written in Rust </h2>
 </div>
 
 ## 📸 Demo
@@ -80,9 +80,11 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 
 `k` or `Up arrow key`: to scroll up
 
+`h` : Show chat history
+
 `q`: to quit the app
 
-`h`: to show the help pop-up. You can dismiss the pop-up with `Esc`
+`?`: to show the help pop-up. You can dismiss the pop-up with `Esc`
 
 <br>
 
