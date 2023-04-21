@@ -14,15 +14,8 @@ use clap::crate_version;
 fn main() -> AppResult<()> {
     cli::cli().version(crate_version!()).get_matches();
 
-    match env::var("OPENAI_API_KEY") {
-        Ok(_) => {}
-        Err(_) => {
-            eprintln!("OPENAI_API_KEY environment variable is not set");
-            std::process::exit(1);
-        }
-    }
     let mut app = App::new();
-    let gpt = GPT::new();
+    let gpt = GPT::new(app.config.gpt.openai_api_key.clone());
 
     let backend = CrosstermBackend::new(io::stderr());
     let terminal = Terminal::new(backend)?;
