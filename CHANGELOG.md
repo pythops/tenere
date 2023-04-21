@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.4] 21/04/2023
+
+### Features
+
+- Support configuration file
+
+### Changes
+
+- Change `ctrl+l` to `n` to start a new chat
+
 ## [0.3] 20/04/2023
 
 ### Features
