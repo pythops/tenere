@@ -55,7 +55,7 @@ pub fn handle_key_events(
             }
 
             // scroll down
-            KeyCode::Char('j') => match app.focused_block {
+            KeyCode::Char('j') | KeyCode::Down => match app.focused_block {
                 FocusedBlock::History => {
                     if app.history_thread_index < app.history.len() - 1 {
                         app.history_thread_index += 1;
@@ -64,12 +64,8 @@ pub fn handle_key_events(
                 _ => app.scroll += 1,
             },
 
-            KeyCode::Down => {
-                app.scroll += 1;
-            }
-
             // scroll up
-            KeyCode::Char('k') => match app.focused_block {
+            KeyCode::Char('k') | KeyCode::Up => match app.focused_block {
                 FocusedBlock::History => {
                     if app.history_thread_index > 0 {
                         app.history_thread_index -= 1;
@@ -78,10 +74,6 @@ pub fn handle_key_events(
                 _ => app.scroll -= 1,
             },
 
-            KeyCode::Up => {
-                app.scroll -= 1;
-            }
-
             // Clear the prompt
             KeyCode::Char('d') => {
                 if app.previous_key == KeyCode::Char('d') {
@@ -89,16 +81,17 @@ pub fn handle_key_events(
                 }
             }
 
-            // Clear the prompt and the chat
-            KeyCode::Char('l') => {
-                if key_event.modifiers == KeyModifiers::CONTROL {
-                    app.prompt = String::from(">_ ");
-                    app.history.push(app.chat.clone());
-                    app.chat = Vec::new();
-                    app.gpt_messages = Vec::new();
-                    app.scroll = 0;
-                }
+            // New chat
+            KeyCode::Char(c) if c == app.config.key_bindings.new_chat => {
+                app.prompt = String::from(">_ ");
+                app.history.push(app.chat.clone());
+                app.chat = Vec::new();
+                app.gpt_messages = Vec::new();
+                app.scroll = 0;
             }
+
+            // Save chat
+            KeyCode::Char(c) if c == app.config.key_bindings.save_chat => {}
 
             // Switch the focus
             KeyCode::Tab => {
@@ -125,18 +118,18 @@ pub fn handle_key_events(
                 }
             }
 
-            // Help popup
-            KeyCode::Char('?') => {
+            // Show help
+            KeyCode::Char(c) if c == app.config.key_bindings.show_help => {
                 app.show_help_popup = true;
             }
 
-            // Help popup
-            KeyCode::Char('h') => {
+            // Show history
+            KeyCode::Char(c) if c == app.config.key_bindings.show_history => {
                 app.show_history_popup = true;
                 app.focused_block = FocusedBlock::History;
             }
 
-            // Discard help popup
+            // Discard help & history popups
             KeyCode::Esc => {
                 app.show_help_popup = false;
                 if app.show_history_popup {

@@ -13,6 +13,8 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
+use crate::config::AppConfig;
+
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug)]
@@ -43,6 +45,7 @@ pub struct App {
     pub history: Vec<Vec<String>>,
     pub show_history_popup: bool,
     pub history_thread_index: usize,
+    pub config: AppConfig,
 }
 
 impl Default for App {
@@ -60,6 +63,7 @@ impl Default for App {
             history: Vec::new(),
             show_history_popup: false,
             history_thread_index: 0,
+            config: AppConfig::load(),
         }
     }
 }

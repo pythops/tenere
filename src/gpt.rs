@@ -6,19 +6,31 @@ use std::collections::HashMap;
 #[derive(Clone, Debug)]
 pub struct GPT {
     client: reqwest::blocking::Client,
-}
-
-impl Default for GPT {
-    fn default() -> Self {
-        Self {
-            client: reqwest::blocking::Client::new(),
-        }
-    }
+    openai_api_key: String,
 }
 
 impl GPT {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(api_key: Option<String>) -> Self {
+        match std::env::var("OPENAI_API_KEY") {
+            Ok(key) => Self {
+                client: reqwest::blocking::Client::new(),
+                openai_api_key: key,
+            },
+            Err(_) => match api_key {
+                Some(key) => Self {
+                    client: reqwest::blocking::Client::new(),
+                    openai_api_key: key,
+                },
+                None => {
+                    eprintln!(
+                        r#"Can not find the openai api key
+You need to define one wether in the configuration file or as an environment variable"#
+                    );
+
+                    std::process::exit(1);
+                }
+            },
+        }
     }
 
     pub fn ask(
@@ -26,14 +38,12 @@ impl GPT {
         chat_messages: Vec<HashMap<String, String>>,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let url = "https://api.openai.com/v1/chat/completions";
-        let token = std::env::var("OPENAI_API_KEY")
-            .expect("OPENAI_API_KEY environment variable is not set");
 
         let mut headers = HeaderMap::new();
         headers.insert("Content-Type", "application/json".parse().unwrap());
         headers.insert(
             "Authorization",
-            format!("Bearer {}", token).parse().unwrap(),
+            format!("Bearer {}", self.openai_api_key).parse().unwrap(),
         );
 
         let mut messages: Vec<HashMap<String, String>> = vec![
