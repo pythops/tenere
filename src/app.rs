@@ -382,7 +382,7 @@ impl App {
 `i`           : Switch to Insert mode
 `Esc`         : Switch to Normal mode
 `dd`          : Clear the prompt
-`ctrl+l`      : Clear the prompt AND the chat and save to history
+`n`           : Start new chat and save the previous one to the history
 `Tab`         : Switch the focus
 `h`           : Show history
 `j` or `Down` : Scroll down
