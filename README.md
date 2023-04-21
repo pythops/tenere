@@ -16,7 +16,7 @@ Only **ChatGPT** is supported for the moment. But I'm planning to support more m
 
 <br>
 
-## ⚙️ Installation
+## 🔌 Installation
 
 You can download the prebuilt binaries from the release page.
 
@@ -40,15 +40,46 @@ This will produce an executable file at `target/release/tenere` that you can cop
 
 <br>
 
-## ⚡ Requirements
+## ⚙️ Configuration
 
-You need to export the **API key** from OpenAI first.
+Tenere can be configured using a TOML configuration file. The file should be located in :
+
+- Linux : `$HOME/.config/tenere/config.toml` or `$XDG_CONFIG_HOME/tenere/config.toml`
+- Mac : `$HOME/Library/Application Support/tenere/config.toml`
+
+### Key bindings
+
+Tenere supports customizable key bindings.
+You can modify some of the default key bindings by updating the `[key_bindings]` section in the configuration file.
+Here is an example with the default key bindings
+
+```toml
+[key_bindings]
+show_help = '?'
+show_history = 'h'
+new_chat = 'n'
+save_chat = 's'
+```
+
+### Chatgpt API
+
+To use Tenere's chat functionality, you'll need to provide an API key for OpenAI. There are two ways to do this:
+
+1. Set an environment variable with your API key:
 
 ```bash
 export OPENAI_API_KEY="YOUTR KEY HERE"
 ```
 
-<br>
+2. Include your API key in the configuration file:
+
+```toml
+[gpt]
+openai_api_key = "Your API key here"
+model = "the chat model name" # <- Optional field
+```
+
+The default model is set to `gpt-3.5-turbo`. check out the [OpenAI documentation](https://platform.openai.com/docs/models/gpt-3-5) for more info.
 
 ## 🚀 Usage
 
@@ -72,7 +103,7 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 
 `dd`: to clear the prompt.
 
-`ctrl+l`: to clear the prompt **AND** the chat and save it to history.
+`n`: Start a new chat and save the previous one in history.
 
 `Tab`: to switch the focus.
 
