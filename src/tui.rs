@@ -1,5 +1,6 @@
 use crate::app::{App, AppResult};
 use crate::event::EventHandler;
+use crate::ui;
 use crossterm::cursor::EnableBlinking;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
@@ -32,7 +33,7 @@ impl<B: Backend> Tui<B> {
     }
 
     pub fn draw(&mut self, app: &mut App) -> AppResult<()> {
-        self.terminal.draw(|frame| app.render(frame))?;
+        self.terminal.draw(|frame| ui::render(app, frame))?;
         Ok(())
     }
 

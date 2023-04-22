@@ -5,11 +5,18 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct AppConfig {
+    #[serde(default = "default_archive_file_name")]
+    pub archive_file_name: String,
+
     #[serde(default)]
     pub key_bindings: KeyBindings,
 
     #[serde(default)]
     pub gpt: GPT,
+}
+
+pub fn default_archive_file_name() -> String {
+    String::from("tenere.archive")
 }
 
 #[derive(Deserialize, Debug, Clone)]
