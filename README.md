@@ -47,6 +47,17 @@ Tenere can be configured using a TOML configuration file. The file should be loc
 - Linux : `$HOME/.config/tenere/config.toml` or `$XDG_CONFIG_HOME/tenere/config.toml`
 - Mac : `$HOME/Library/Application Support/tenere/config.toml`
 
+### General settings
+
+Here are the available general settings:
+
+- `archive_file_name`: the file name where the chat will be saved. By default it is set to `tenere.archive`
+
+```toml
+archive_file_name = "tenere.archive"
+
+```
+
 ### Key bindings
 
 Tenere supports customizable key bindings.
@@ -104,6 +115,8 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 `dd`: to clear the prompt.
 
 `n`: Start a new chat and save the previous one in history.
+
+`s`: Save the current chat or chat history (history popup should be visible first) to `tenere.archive` file in the current directory.
 
 `Tab`: to switch the focus.
 
