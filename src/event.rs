@@ -1,4 +1,5 @@
 use crate::app::AppResult;
+use crate::notification::Notification;
 use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
 use std::sync::mpsc;
 use std::thread;
@@ -11,6 +12,7 @@ pub enum Event {
     Mouse(MouseEvent),
     Resize(u16, u16),
     GPTResponse(String),
+    Notification(Notification),
 }
 
 #[allow(dead_code)]
