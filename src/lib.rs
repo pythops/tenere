@@ -11,3 +11,7 @@ pub mod gpt;
 pub mod cli;
 
 pub mod config;
+
+pub mod ui;
+
+pub mod notification;
