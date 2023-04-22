@@ -7,6 +7,8 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::sync::mpsc::Sender;
 use std::{collections::HashMap, thread};
 
+use crate::notification::{Notification, NotificationLevel};
+
 pub fn handle_key_events(
     key_event: KeyEvent,
     app: &mut App,
@@ -91,7 +93,61 @@ pub fn handle_key_events(
             }
 
             // Save chat
-            KeyCode::Char(c) if c == app.config.key_bindings.save_chat => {}
+            KeyCode::Char(c) if c == app.config.key_bindings.save_chat => match app.focused_block {
+                FocusedBlock::History | FocusedBlock::Preview => {
+                    if !app.history.is_empty() {
+                        let chat: String = app.history[app.history_thread_index]
+                            .iter()
+                            .map(|m| m.to_string())
+                            .collect();
+                        match std::fs::write(app.config.archive_file_name.clone(), chat) {
+                            Ok(_) => {
+                                let notif = Notification::new(
+                                    format!(
+                                        "**Info**\nChat saved to `{}` file",
+                                        app.config.archive_file_name
+                                    ),
+                                    NotificationLevel::Info,
+                                );
+
+                                sender.send(Event::Notification(notif)).unwrap();
+                            }
+                            Err(e) => {
+                                let notif = Notification::new(
+                                    format!("**Error**\n{}", e),
+                                    NotificationLevel::Error,
+                                );
+
+                                sender.send(Event::Notification(notif)).unwrap();
+                            }
+                        }
+                    }
+                }
+                FocusedBlock::Chat | FocusedBlock::Prompt => {
+                    let chat: String = app.chat.iter().map(|m| m.to_string()).collect();
+                    match std::fs::write(app.config.archive_file_name.clone(), chat) {
+                        Ok(_) => {
+                            let notif = Notification::new(
+                                format!(
+                                    "**Info**\nChat saved to `{}` file",
+                                    app.config.archive_file_name
+                                ),
+                                NotificationLevel::Info,
+                            );
+
+                            sender.send(Event::Notification(notif)).unwrap();
+                        }
+                        Err(e) => {
+                            let notif = Notification::new(
+                                format!("**Error**\n{}", e),
+                                NotificationLevel::Error,
+                            );
+
+                            sender.send(Event::Notification(notif)).unwrap();
+                        }
+                    }
+                }
+            },
 
             // Switch the focus
             KeyCode::Tab => {
