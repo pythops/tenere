@@ -41,6 +41,9 @@ fn main() -> AppResult<()> {
                 conv.insert("content".to_string(), response.clone());
                 app.gpt_messages.push(conv);
             }
+            Event::Notification(notification) => {
+                app.notifications.push(notification);
+            }
         }
     }
 
