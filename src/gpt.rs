@@ -1,3 +1,5 @@
+use crate::config::GPTConfig;
+use crate::llm::LLM;
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
@@ -7,13 +9,15 @@ use std::collections::HashMap;
 pub struct GPT {
     client: reqwest::blocking::Client,
     openai_api_key: String,
+    url: String,
 }
 
 impl GPT {
-    pub fn new(api_key: Option<String>) -> Self {
+    pub fn new(config: GPTConfig) -> Self {
         let openai_api_key = match std::env::var("OPENAI_API_KEY") {
             Ok(key) => key,
-            Err(_) => api_key
+            Err(_) => config
+                .openai_api_key
                 .ok_or_else(|| {
                     eprintln!(
                         r#"Can not find the openai api key
@@ -28,15 +32,16 @@ You need to define one wether in the configuration file or as an environment var
         Self {
             client: reqwest::blocking::Client::new(),
             openai_api_key,
+            url: config.url,
         }
     }
+}
 
-    pub fn ask(
+impl LLM for GPT {
+    fn ask(
         &self,
         chat_messages: Vec<HashMap<String, String>>,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let url = "https://api.openai.com/v1/chat/completions";
-
         let mut headers = HeaderMap::new();
         headers.insert("Content-Type", "application/json".parse().unwrap());
         headers.insert(
@@ -61,7 +66,12 @@ You need to define one wether in the configuration file or as an environment var
             "messages": messages
         });
 
-        let response = self.client.post(url).headers(headers).json(&body).send()?;
+        let response = self
+            .client
+            .post(&self.url)
+            .headers(headers)
+            .json(&body)
+            .send()?;
 
         match response.error_for_status() {
             Ok(res) => {
