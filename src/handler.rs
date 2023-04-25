@@ -8,11 +8,12 @@ use std::sync::mpsc::Sender;
 use std::{collections::HashMap, thread};
 
 use crate::notification::{Notification, NotificationLevel};
+use std::sync::Arc;
 
 pub fn handle_key_events(
     key_event: KeyEvent,
     app: &mut App,
-    gpt: &GPT,
+    gpt: Arc<GPT>,
     sender: Sender<Event>,
 ) -> AppResult<()> {
     match app.mode {
@@ -43,9 +44,9 @@ pub fn handle_key_events(
                 app.gpt_messages.push(conv.clone());
 
                 let gpt_messages = app.gpt_messages.clone();
-                let gpt = gpt.clone();
+
                 thread::spawn(move || {
-                    let response = gpt.ask(gpt_messages);
+                    let response = gpt.ask(gpt_messages.to_vec());
                     sender
                         .send(Event::GPTResponse(match response {
                             Ok(answer) => answer,
