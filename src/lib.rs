@@ -15,3 +15,5 @@ pub mod config;
 pub mod ui;
 
 pub mod notification;
+
+pub mod llm;

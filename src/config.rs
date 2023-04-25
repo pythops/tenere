@@ -4,7 +4,7 @@ use dirs;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
-pub struct AppConfig {
+pub struct Config {
     #[serde(default = "default_archive_file_name")]
     pub archive_file_name: String,
 
@@ -12,7 +12,7 @@ pub struct AppConfig {
     pub key_bindings: KeyBindings,
 
     #[serde(default)]
-    pub gpt: GPT,
+    pub gpt: GPTConfig,
 }
 
 pub fn default_archive_file_name() -> String {
@@ -20,25 +20,33 @@ pub fn default_archive_file_name() -> String {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct GPT {
+pub struct GPTConfig {
     pub openai_api_key: Option<String>,
 
-    #[serde(default = "GPT::default_model")]
+    #[serde(default = "GPTConfig::default_model")]
     pub model: String,
+
+    #[serde(default = "GPTConfig::default_url")]
+    pub url: String,
 }
 
-impl Default for GPT {
+impl Default for GPTConfig {
     fn default() -> Self {
         Self {
             openai_api_key: None,
             model: String::from("gpt-3.5-turbo"),
+            url: String::from("https://api.openai.com/v1/chat/completions"),
         }
     }
 }
 
-impl GPT {
+impl GPTConfig {
     pub fn default_model() -> String {
         String::from("gpt-3.5-turbo")
+    }
+
+    pub fn default_url() -> String {
+        String::from("https://api.openai.com/v1/chat/completions")
     }
 }
 
@@ -86,7 +94,7 @@ impl KeyBindings {
     }
 }
 
-impl AppConfig {
+impl Config {
     pub fn load() -> Self {
         let conf_path = dirs::config_dir()
             .unwrap()
@@ -94,7 +102,7 @@ impl AppConfig {
             .join("config.toml");
 
         let config = std::fs::read_to_string(conf_path).unwrap_or(String::new());
-        let app_config: AppConfig = toml::from_str(&config).unwrap();
+        let app_config: Config = toml::from_str(&config).unwrap();
         app_config
     }
 }

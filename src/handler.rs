@@ -1,8 +1,9 @@
 use crate::{
     app::{App, AppResult, FocusedBlock, Mode},
     event::Event,
-    gpt::GPT,
 };
+
+use crate::llm::LLM;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::sync::mpsc::Sender;
 use std::{collections::HashMap, thread};
@@ -13,7 +14,7 @@ use std::sync::Arc;
 pub fn handle_key_events(
     key_event: KeyEvent,
     app: &mut App,
-    gpt: Arc<GPT>,
+    llm: Arc<impl LLM + 'static>,
     sender: Sender<Event>,
 ) -> AppResult<()> {
     match app.mode {
@@ -30,8 +31,6 @@ pub fn handle_key_events(
             }
 
             KeyCode::Enter => {
-                let mut conv: HashMap<String, String> = HashMap::new();
-
                 let user_input: String = app.prompt.drain(3..).collect();
                 let user_input = user_input.trim();
                 if user_input.is_empty() {
@@ -39,16 +38,18 @@ pub fn handle_key_events(
                 }
                 app.chat.push(format!(" : {}\n", user_input));
 
-                conv.insert("role".to_string(), "user".to_string());
-                conv.insert("content".to_string(), user_input.to_string());
-                app.gpt_messages.push(conv.clone());
+                let conv = HashMap::from([
+                    ("role".into(), "user".into()),
+                    ("content".into(), user_input.into()),
+                ]);
+                app.llm_messages.push(conv);
 
-                let gpt_messages = app.gpt_messages.clone();
+                let llm_messages = app.llm_messages.clone();
 
                 thread::spawn(move || {
-                    let response = gpt.ask(gpt_messages.to_vec());
+                    let response = llm.ask(llm_messages.to_vec());
                     sender
-                        .send(Event::GPTResponse(match response {
+                        .send(Event::LLMAnswer(match response {
                             Ok(answer) => answer,
                             Err(e) => e.to_string(),
                         }))
@@ -89,7 +90,7 @@ pub fn handle_key_events(
                 app.prompt = String::from(">_ ");
                 app.history.push(app.chat.clone());
                 app.chat = Vec::new();
-                app.gpt_messages = Vec::new();
+                app.llm_messages = Vec::new();
                 app.scroll = 0;
             }
 

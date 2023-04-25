@@ -1,9 +1,11 @@
 use std;
 use std::collections::HashMap;
 
-use crate::config::AppConfig;
+use crate::config::Config;
 use crate::notification::Notification;
 use crossterm::event::KeyCode;
+
+use std::sync::Arc;
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -31,16 +33,16 @@ pub struct App {
     pub previous_key: KeyCode,
     pub focused_block: FocusedBlock,
     pub show_help_popup: bool,
-    pub gpt_messages: Vec<HashMap<String, String>>,
+    pub llm_messages: Vec<HashMap<String, String>>,
     pub history: Vec<Vec<String>>,
     pub show_history_popup: bool,
     pub history_thread_index: usize,
-    pub config: AppConfig,
+    pub config: Arc<Config>,
     pub notifications: Vec<Notification>,
 }
 
-impl Default for App {
-    fn default() -> Self {
+impl App {
+    pub fn new(config: Arc<Config>) -> Self {
         Self {
             running: true,
             prompt: String::from(">_ "),
@@ -50,19 +52,13 @@ impl Default for App {
             previous_key: KeyCode::Null,
             focused_block: FocusedBlock::Prompt,
             show_help_popup: false,
-            gpt_messages: Vec::new(),
+            llm_messages: Vec::new(),
             history: Vec::new(),
             show_history_popup: false,
             history_thread_index: 0,
-            config: AppConfig::load(),
+            config,
             notifications: Vec::new(),
         }
-    }
-}
-
-impl App {
-    pub fn new() -> Self {
-        Self::default()
     }
 
     pub fn tick(&mut self) {
