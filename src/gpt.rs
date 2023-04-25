@@ -11,25 +11,23 @@ pub struct GPT {
 
 impl GPT {
     pub fn new(api_key: Option<String>) -> Self {
-        match std::env::var("OPENAI_API_KEY") {
-            Ok(key) => Self {
-                client: reqwest::blocking::Client::new(),
-                openai_api_key: key,
-            },
-            Err(_) => match api_key {
-                Some(key) => Self {
-                    client: reqwest::blocking::Client::new(),
-                    openai_api_key: key,
-                },
-                None => {
+        let openai_api_key = match std::env::var("OPENAI_API_KEY") {
+            Ok(key) => key,
+            Err(_) => api_key
+                .ok_or_else(|| {
                     eprintln!(
                         r#"Can not find the openai api key
 You need to define one wether in the configuration file or as an environment variable"#
                     );
 
                     std::process::exit(1);
-                }
-            },
+                })
+                .unwrap(),
+        };
+
+        Self {
+            client: reqwest::blocking::Client::new(),
+            openai_api_key,
         }
     }
 
