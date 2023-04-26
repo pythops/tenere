@@ -1,5 +1,6 @@
+use crate::chatgpt::ChatGPT;
 use crate::config::Config;
-use crate::gpt::GPT;
+use serde::Deserialize;
 use std::collections::HashMap;
 
 use std::sync::Arc;
@@ -10,6 +11,7 @@ pub trait LLM: Send + Sync {
     ) -> Result<String, Box<dyn std::error::Error>>;
 }
 
+#[derive(Deserialize, Debug)]
 pub enum LLMBackend {
     ChatGPT,
 }
@@ -19,7 +21,7 @@ pub struct LLMModel {}
 impl LLMModel {
     pub fn init(model: LLMBackend, config: Arc<Config>) -> impl LLM {
         match model {
-            LLMBackend::ChatGPT => GPT::new(config.gpt.clone()),
+            LLMBackend::ChatGPT => ChatGPT::new(config.chatgpt.clone()),
         }
     }
 }

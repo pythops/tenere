@@ -1,4 +1,4 @@
-use crate::config::GPTConfig;
+use crate::config::ChatGPTConfig;
 use crate::llm::LLM;
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
@@ -6,14 +6,14 @@ use std;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
-pub struct GPT {
+pub struct ChatGPT {
     client: reqwest::blocking::Client,
     openai_api_key: String,
     url: String,
 }
 
-impl GPT {
-    pub fn new(config: GPTConfig) -> Self {
+impl ChatGPT {
+    pub fn new(config: ChatGPTConfig) -> Self {
         let openai_api_key = match std::env::var("OPENAI_API_KEY") {
             Ok(key) => key,
             Err(_) => config
@@ -37,7 +37,7 @@ You need to define one wether in the configuration file or as an environment var
     }
 }
 
-impl LLM for GPT {
+impl LLM for ChatGPT {
     fn ask(
         &self,
         chat_messages: Vec<HashMap<String, String>>,
