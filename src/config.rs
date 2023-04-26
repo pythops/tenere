@@ -1,3 +1,4 @@
+use crate::llm::LLMBackend;
 use toml;
 
 use dirs;
@@ -11,36 +12,43 @@ pub struct Config {
     #[serde(default)]
     pub key_bindings: KeyBindings,
 
+    #[serde(default = "default_llm_backend")]
+    pub model: LLMBackend,
+
     #[serde(default)]
-    pub gpt: GPTConfig,
+    pub chatgpt: ChatGPTConfig,
 }
 
 pub fn default_archive_file_name() -> String {
     String::from("tenere.archive")
 }
 
+pub fn default_llm_backend() -> LLMBackend {
+    LLMBackend::ChatGPT
+}
+
 #[derive(Deserialize, Debug, Clone)]
-pub struct GPTConfig {
+pub struct ChatGPTConfig {
     pub openai_api_key: Option<String>,
 
-    #[serde(default = "GPTConfig::default_model")]
+    #[serde(default = "ChatGPTConfig::default_model")]
     pub model: String,
 
-    #[serde(default = "GPTConfig::default_url")]
+    #[serde(default = "ChatGPTConfig::default_url")]
     pub url: String,
 }
 
-impl Default for GPTConfig {
+impl Default for ChatGPTConfig {
     fn default() -> Self {
         Self {
             openai_api_key: None,
-            model: String::from("gpt-3.5-turbo"),
-            url: String::from("https://api.openai.com/v1/chat/completions"),
+            model: Self::default_model(),
+            url: Self::default_url(),
         }
     }
 }
 
-impl GPTConfig {
+impl ChatGPTConfig {
     pub fn default_model() -> String {
         String::from("gpt-3.5-turbo")
     }

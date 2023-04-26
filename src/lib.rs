@@ -6,7 +6,7 @@ pub mod tui;
 
 pub mod handler;
 
-pub mod gpt;
+pub mod chatgpt;
 
 pub mod cli;
 
