@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use crate::config::Config;
 use crate::notification::Notification;
+use crate::spinner::Spinner;
 use crossterm::event::KeyCode;
 
 use std::sync::Arc;
@@ -39,6 +40,7 @@ pub struct App {
     pub history_thread_index: usize,
     pub config: Arc<Config>,
     pub notifications: Vec<Notification>,
+    pub spinner: Spinner,
 }
 
 impl App {
@@ -58,11 +60,19 @@ impl App {
             history_thread_index: 0,
             config,
             notifications: Vec::new(),
+            spinner: Spinner::default(),
         }
     }
 
     pub fn tick(&mut self) {
         self.notifications.retain(|n| n.ttl > 0);
         self.notifications.iter_mut().for_each(|n| n.ttl -= 1);
+
+        if self.spinner.active {
+            self.chat.pop();
+            self.chat
+                .push(format!("🤖: Waiting {}", self.spinner.draw()));
+            self.spinner.update();
+        }
     }
 }

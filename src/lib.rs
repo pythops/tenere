@@ -17,3 +17,5 @@ pub mod ui;
 pub mod notification;
 
 pub mod llm;
+
+pub mod spinner;

@@ -39,6 +39,7 @@ fn main() -> AppResult<()> {
             Event::Resize(_, _) => {}
             Event::LLMAnswer(answer) => {
                 app.chat.pop();
+                app.spinner.active = false;
                 app.chat.push(format!("🤖: {}\n", answer));
                 app.chat.push("\n".to_string());
                 let mut conv: HashMap<String, String> = HashMap::new();
