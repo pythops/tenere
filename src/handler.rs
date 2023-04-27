@@ -55,7 +55,8 @@ pub fn handle_key_events(
                         }))
                         .unwrap();
                 });
-                app.chat.push("🤖: Waiting ...".to_string());
+                app.spinner.active = true;
+                app.chat.push("🤖: Waiting ..".to_string());
             }
 
             // scroll down
