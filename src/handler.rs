@@ -36,7 +36,7 @@ pub fn handle_key_events(
                 if user_input.is_empty() {
                     return Ok(());
                 }
-                app.chat.push(format!(" : {}\n", user_input));
+                app.chat.push(format!(" : {user_input}\n"));
 
                 let conv = HashMap::from([
                     ("role".into(), "user".into()),
@@ -117,7 +117,7 @@ pub fn handle_key_events(
                             }
                             Err(e) => {
                                 let notif = Notification::new(
-                                    format!("**Error**\n{}", e),
+                                    format!("**Error**\n{e}"),
                                     NotificationLevel::Error,
                                 );
 
@@ -142,7 +142,7 @@ pub fn handle_key_events(
                         }
                         Err(e) => {
                             let notif = Notification::new(
-                                format!("**Error**\n{}", e),
+                                format!("**Error**\n{e}"),
                                 NotificationLevel::Error,
                             );
 
@@ -166,12 +166,12 @@ pub fn handle_key_events(
                         FocusedBlock::Prompt => app.focused_block = FocusedBlock::Chat,
                         _ => (),
                     }
-                    app.scroll = 0
+                    app.scroll = 0;
                 }
             }
 
             // kill the app
-            KeyCode::Char('c') | KeyCode::Char('C') => {
+            KeyCode::Char('c' | 'C') => {
                 if key_event.modifiers == KeyModifiers::CONTROL {
                     app.running = false;
                 }
