@@ -7,7 +7,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    text::{Span, Spans, Text},
+    text::{Line, Span, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
@@ -148,7 +148,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 app.scroll = 2
             }
         }
-        Paragraph::new(app.prompt.as_ref())
+        Paragraph::new(app.prompt.as_str())
             .wrap(Wrap { trim: false })
             .scroll((scroll as u16, 0))
             .style(Style::default())
@@ -273,14 +273,14 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
         let history = List::new({
             if app.history.is_empty() {
-                vec![ListItem::new(Spans::from(Span::from("History is empty")))]
+                vec![ListItem::new(Line::from(Span::from("History is empty")))]
             } else {
                 app.history
                     .iter()
                     .enumerate()
                     .map(|(i, c)| {
                         let msg = c[0].clone().strip_prefix(" : ").unwrap().to_string();
-                        let content = Spans::from(Span::from(msg));
+                        let content = Line::from(Span::from(msg));
                         ListItem::new(content).style({
                             if app.history_thread_index == i {
                                 Style::default().bg(Color::Rgb(50, 54, 26))
