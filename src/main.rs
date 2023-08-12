@@ -5,6 +5,7 @@ use tenere::cli;
 use tenere::config::Config;
 use tenere::event::{Event, EventHandler};
 use tenere::handler::handle_key_events;
+use tenere::llm::LLMAnswer;
 use tenere::tui::Tui;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
@@ -37,15 +38,22 @@ fn main() -> AppResult<()> {
             }
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
-            Event::LLMAnswer(answer) => {
-                app.chat.pop();
-                app.spinner.active = false;
-                app.chat.push(format!("🤖: {}\n", answer));
-                app.chat.push("\n".to_string());
+            Event::LLMEvent(LLMAnswer::Answer(answer)) => {
+                app.answer.push_str(answer.as_str());
+            }
+            Event::LLMEvent(LLMAnswer::EndAnswer) => {
                 let mut conv: HashMap<String, String> = HashMap::new();
                 conv.insert("role".to_string(), "user".to_string());
-                conv.insert("content".to_string(), answer);
+                conv.insert("content".to_string(), app.answer.clone());
                 app.llm_messages.push(conv);
+                app.chat.push(app.answer.clone());
+                app.chat.push("\n".to_string());
+                app.answer.clear();
+            }
+            Event::LLMEvent(LLMAnswer::StartAnswer) => {
+                app.spinner.active = false;
+                app.chat.pop();
+                app.chat.push("🤖: ".to_string());
             }
             Event::Notification(notification) => {
                 app.notifications.push(notification);
