@@ -192,7 +192,9 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
     // Chat block
     let chat = {
-        let messages: String = app.chat.iter().map(|m| m.to_string()).collect();
+        let mut messages: String = app.chat.iter().map(|m| m.to_string()).collect();
+
+        messages.push_str(app.answer.as_str());
 
         let messages_height = {
             let mut height: u16 = 0;
@@ -202,6 +204,11 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                     height += 1;
                     height += line.width() as u16 / app_area.width;
                 }
+            }
+
+            for line in app.answer.lines() {
+                height += 1;
+                height += line.width() as u16 / app_area.width;
             }
             height
         };
@@ -219,12 +226,11 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 scroll = height_diff + app.scroll;
             }
 
-            // // scroll up case
+            // scroll up case
             if height_diff > 0 && -app.scroll > height_diff {
                 app.scroll = -height_diff;
             }
-            //
-            // // Scroll down case
+            // Scroll down case
             if height_diff > 0 && app.scroll > 0 {
                 app.scroll = 0;
             }

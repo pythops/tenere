@@ -1,7 +1,9 @@
+use crate::llm::LLMAnswer;
 use crate::{
     app::{App, AppResult, FocusedBlock, Mode},
     event::Event,
 };
+use colored::*;
 
 use crate::llm::LLM;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -46,17 +48,22 @@ pub fn handle_key_events(
 
                 let llm_messages = app.llm_messages.clone();
 
-                thread::spawn(move || {
-                    let response = llm.ask(llm_messages.to_vec());
-                    sender
-                        .send(Event::LLMAnswer(match response {
-                            Ok(answer) => answer,
-                            Err(e) => e.to_string(),
-                        }))
-                        .unwrap();
-                });
                 app.spinner.active = true;
-                app.chat.push("🤖: Waiting ..".to_string());
+                app.chat.push("🤖: ".to_string());
+
+                thread::spawn(move || {
+                    let res = llm.ask(llm_messages.to_vec(), &sender);
+                    if let Err(e) = res {
+                        sender
+                            .send(Event::LLMEvent(LLMAnswer::StartAnswer))
+                            .unwrap();
+                        sender
+                            .send(Event::LLMEvent(LLMAnswer::Answer(
+                                e.to_string().red().to_string(),
+                            )))
+                            .unwrap();
+                    }
+                });
             }
 
             // scroll down
