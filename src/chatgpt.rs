@@ -95,7 +95,7 @@ impl LLM for ChatGPT {
                     if let Some(data_json) = captures.get(1) {
                         if data_json.as_str() == "[DONE]" {
                             sender.send(Event::LLMEvent(LLMAnswer::EndAnswer)).unwrap();
-                            continue;
+                            break;
                         }
                         let x: Value = serde_json::from_str(data_json.as_str()).unwrap();
 
