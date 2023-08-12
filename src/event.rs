@@ -1,4 +1,5 @@
 use crate::app::AppResult;
+use crate::llm::LLMAnswer;
 use crate::notification::Notification;
 use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
 use std::sync::mpsc;
@@ -11,7 +12,7 @@ pub enum Event {
     Key(KeyEvent),
     Mouse(MouseEvent),
     Resize(u16, u16),
-    LLMAnswer(String),
+    LLMEvent(LLMAnswer),
     Notification(Notification),
 }
 
