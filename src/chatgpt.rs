@@ -1,9 +1,15 @@
+use crate::event::Event;
+use regex::Regex;
+use std::{thread, time};
+
 use crate::config::ChatGPTConfig;
-use crate::llm::LLM;
+use crate::llm::{LLMAnswer, LLM};
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
 use std::collections::HashMap;
+use std::io::Read;
+use std::sync::mpsc::Sender;
 
 #[derive(Clone, Debug)]
 pub struct ChatGPT {
@@ -41,12 +47,13 @@ impl LLM for ChatGPT {
     fn ask(
         &self,
         chat_messages: Vec<HashMap<String, String>>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+        sender: &Sender<Event>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut headers = HeaderMap::new();
-        headers.insert("Content-Type", "application/json".parse().unwrap());
+        headers.insert("Content-Type", "application/json".parse()?);
         headers.insert(
             "Authorization",
-            format!("Bearer {}", self.openai_api_key).parse().unwrap(),
+            format!("Bearer {}", self.openai_api_key).parse()?,
         );
 
         let mut messages: Vec<HashMap<String, String>> = vec![
@@ -63,8 +70,11 @@ impl LLM for ChatGPT {
 
         let body: Value = json!({
             "model": "gpt-3.5-turbo",
-            "messages": messages
+            "messages": messages,
+            "stream": true,
         });
+
+        let mut buffer = String::new();
 
         let response = self
             .client
@@ -74,17 +84,35 @@ impl LLM for ChatGPT {
             .send()?;
 
         match response.error_for_status() {
-            Ok(res) => {
-                let response_body: Value = res.json()?;
-                let answer = response_body["choices"][0]["message"]["content"]
-                    .as_str()
-                    .unwrap()
-                    .trim_matches('"')
-                    .to_string();
+            Ok(mut res) => {
+                let _answser = res.read_to_string(&mut buffer)?;
 
-                Ok(answer)
+                let re = Regex::new(r"data:\s(.*)").unwrap();
+
+                sender.send(Event::LLMEvent(LLMAnswer::StartAnswer))?;
+
+                for captures in re.captures_iter(&buffer) {
+                    if let Some(data_json) = captures.get(1) {
+                        if data_json.as_str() == "[DONE]" {
+                            sender.send(Event::LLMEvent(LLMAnswer::EndAnswer)).unwrap();
+                            continue;
+                        }
+                        let x: Value = serde_json::from_str(data_json.as_str()).unwrap();
+
+                        let msg = x["choices"][0]["delta"]["content"].as_str().unwrap_or("\n");
+
+                        if msg != "null" {
+                            sender
+                                .send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))
+                                .unwrap();
+                        }
+                        thread::sleep(time::Duration::from_millis(100));
+                    }
+                }
             }
-            Err(e) => Err(Box::new(e)),
+            Err(e) => return Err(Box::new(e)),
         }
+
+        Ok(())
     }
 }
