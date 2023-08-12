@@ -205,6 +205,11 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                     height += line.width() as u16 / app_area.width;
                 }
             }
+
+            for line in app.answer.lines() {
+                height += 1;
+                height += line.width() as u16 / app_area.width;
+            }
             height
         };
 
