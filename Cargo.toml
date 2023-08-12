@@ -4,6 +4,10 @@ version = "0.7.0"
 authors = ["pythops <contact@pythops.com>"]
 license = "AGPLv3"
 edition = "2021"
+description = "TUI interface for LLMs written in Rust"
+readme = "README.md"
+homepage = "https://github.com/pythops/tenere"
+repository = "https://github.com/pythops/tenere"
 
 [dependencies]
 crossterm = "0.26.1"
