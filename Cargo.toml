@@ -2,7 +2,7 @@
 name = "tenere"
 version = "0.7.0"
 authors = ["pythops <contact@pythops.com>"]
-license = "AGPLv3"
+license = "AGPL-3.0"
 edition = "2021"
 description = "TUI interface for LLMs written in Rust"
 readme = "README.md"
