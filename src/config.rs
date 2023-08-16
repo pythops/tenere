@@ -71,6 +71,9 @@ pub struct KeyBindings {
 
     #[serde(default = "KeyBindings::default_save_chat")]
     pub save_chat: char,
+
+    #[serde(default = "KeyBindings::default_stop_stream")]
+    pub stop_stream: char,
 }
 
 impl Default for KeyBindings {
@@ -80,6 +83,7 @@ impl Default for KeyBindings {
             show_history: 'h',
             new_chat: 'n',
             save_chat: 's',
+            stop_stream: 't',
         }
     }
 }
@@ -99,6 +103,10 @@ impl KeyBindings {
 
     fn default_save_chat() -> char {
         's'
+    }
+
+    fn default_stop_stream() -> char {
+        't'
     }
 }
 
