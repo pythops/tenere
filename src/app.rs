@@ -1,5 +1,6 @@
 use std;
 use std::collections::HashMap;
+use std::sync::atomic::AtomicBool;
 
 use crate::config::Config;
 use crate::notification::Notification;
@@ -42,6 +43,7 @@ pub struct App {
     pub config: Arc<Config>,
     pub notifications: Vec<Notification>,
     pub spinner: Spinner,
+    pub terminate_response_signal: Arc<AtomicBool>,
 }
 
 impl App {
@@ -63,6 +65,7 @@ impl App {
             config,
             notifications: Vec::new(),
             spinner: Spinner::default(),
+            terminate_response_signal: Arc::new(AtomicBool::new(false)),
         }
     }
 
