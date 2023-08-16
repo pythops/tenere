@@ -1,3 +1,6 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
 use crate::event::Event;
 use regex::Regex;
 use std::{thread, time};
@@ -48,6 +51,7 @@ impl LLM for ChatGPT {
         &self,
         chat_messages: Vec<HashMap<String, String>>,
         sender: &Sender<Event>,
+        terminate_response_signal: Arc<AtomicBool>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut headers = HeaderMap::new();
         headers.insert("Content-Type", "application/json".parse()?);
@@ -93,6 +97,10 @@ impl LLM for ChatGPT {
 
                 for captures in re.captures_iter(&buffer) {
                     if let Some(data_json) = captures.get(1) {
+                        if terminate_response_signal.load(Ordering::Relaxed) {
+                            sender.send(Event::LLMEvent(LLMAnswer::EndAnswer)).unwrap();
+                            break;
+                        }
                         if data_json.as_str() == "[DONE]" {
                             sender.send(Event::LLMEvent(LLMAnswer::EndAnswer)).unwrap();
                             break;

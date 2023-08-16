@@ -32,6 +32,11 @@ pub fn handle_key_events(
                 app.running = false;
             }
 
+            KeyCode::Char('t') => {
+                app.terminate_response_signal
+                    .store(true, std::sync::atomic::Ordering::Relaxed);
+            }
+
             KeyCode::Enter => {
                 let user_input: String = app.prompt.drain(3..).collect();
                 let user_input = user_input.trim();
@@ -51,8 +56,10 @@ pub fn handle_key_events(
                 app.spinner.active = true;
                 app.chat.push("🤖: ".to_string());
 
+                let terminate_response_signal = app.terminate_response_signal.clone();
+
                 thread::spawn(move || {
-                    let res = llm.ask(llm_messages.to_vec(), &sender);
+                    let res = llm.ask(llm_messages.to_vec(), &sender, terminate_response_signal);
                     if let Err(e) = res {
                         sender
                             .send(Event::LLMEvent(LLMAnswer::StartAnswer))

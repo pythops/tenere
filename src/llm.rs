@@ -3,14 +3,17 @@ use crate::config::Config;
 use crate::event::Event;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::Sender;
 
 use std::sync::Arc;
+
 pub trait LLM: Send + Sync {
     fn ask(
         &self,
         chat_messages: Vec<HashMap<String, String>>,
         sender: &Sender<Event>,
+        terminate_response_signal: Arc<AtomicBool>,
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
 

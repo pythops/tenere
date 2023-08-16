@@ -49,6 +49,8 @@ fn main() -> AppResult<()> {
                 app.chat.push(app.answer.clone());
                 app.chat.push("\n".to_string());
                 app.answer.clear();
+                app.terminate_response_signal
+                    .store(false, std::sync::atomic::Ordering::Relaxed);
             }
             Event::LLMEvent(LLMAnswer::StartAnswer) => {
                 app.spinner.active = false;

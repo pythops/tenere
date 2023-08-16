@@ -384,6 +384,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 `s`          : Save the chat to `{}` file in the current directory
 `Tab`        : Switch the focus
 `h`          : Show history
+`t`          : Stop the stream response
 `j` or `Down`  : Scroll down
 `k` or `Up`    : Scroll up
 `?`          : show help
