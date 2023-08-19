@@ -8,7 +8,10 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap},
+    widgets::{
+        Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Scrollbar,
+        ScrollbarOrientation, Wrap,
+    },
     Frame,
 };
 use unicode_width::UnicodeWidthStr;
@@ -95,31 +98,35 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // Layout
-    let app_area = frame.size();
+    let frame_size = frame.size();
 
     // prompt height can grow till 40% of the frame height
-    let max_prompt_height = (0.4 * app_area.height as f32) as u16;
-    let prompt_height = {
+    let prompt_block_max_height = (0.4 * frame_size.height as f32) as u16;
+
+    let prompt_content_height = {
         let mut height: u16 = 1;
         for line in app.prompt.lines() {
             height += 1;
-            height += line.width() as u16 / app_area.width;
+            height += line.width() as u16 / frame_size.width;
         }
         height
     };
 
+    let prompt_block_height = std::cmp::min(prompt_content_height, prompt_block_max_height);
+
     // chat height is the frame height minus the prompt height
-    let max_chat_height = app_area.height - max_prompt_height - 3;
-    let chat_height = app_area.height - prompt_height - 3;
+    let chat_block_height = std::cmp::max(
+        frame_size.height - prompt_block_height - 3,
+        frame_size.height - prompt_block_max_height - 3,
+    );
 
     let (chat_block, prompt_block) = {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Length(std::cmp::max(chat_height, max_chat_height)),
-                    Constraint::Length(std::cmp::min(prompt_height, max_prompt_height)),
-                    // Constraint::Length(2),
+                    Constraint::Length(chat_block_height),
+                    Constraint::Length(prompt_block_height),
                 ]
                 .as_ref(),
             )
@@ -128,29 +135,24 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     };
 
     // prompt block
-    //TODO: show scroll bar
-    let prompt = {
-        let mut scroll = 0;
-        let height_diff = prompt_height as i32 - max_prompt_height as i32;
+    let prompt_paragraph = {
+        let mut scroll: u16 = 0;
+
         if let FocusedBlock::Prompt = app.focused_block {
-            if height_diff + app.scroll >= 0 {
-                scroll = height_diff + app.scroll;
-            }
+            let diff: isize = prompt_content_height as isize - prompt_block_max_height as isize;
 
-            // scroll up case
-            if height_diff > 0 && -app.scroll > height_diff {
-                app.scroll = -height_diff;
-            }
-
-            // Scroll down case
-            // 2 empty lines
-            if height_diff > 0 && app.scroll >= 2 {
-                app.scroll = 2
+            // case where the prompt content height is shorter than the prompt block height
+            if diff < 0 {
+                app.scroll = 0;
+            } else {
+                app.scroll = diff as u16;
+                scroll = app.scroll;
             }
         }
+
         Paragraph::new(app.prompt.as_str())
             .wrap(Wrap { trim: false })
-            .scroll((scroll as u16, 0))
+            .scroll((scroll, 0))
             .style(Style::default())
             .block(
                 Block::default()
@@ -173,67 +175,54 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     match app.mode {
         Mode::Normal => {}
 
-        // TODO: set the cursor position
         Mode::Insert => frame.set_cursor(
             prompt_block.x
                 + {
                     let last_line = app.prompt.lines().last().unwrap_or("");
                     let mut width = last_line.len() as u16;
-                    if last_line.len() as u16 > app_area.width {
+                    if last_line.len() as u16 > frame_size.width {
                         let last_word = last_line.rsplit(' ').last().unwrap_or("");
-                        width = last_line.width() as u16 % app_area.width + last_word.len() as u16;
+                        width =
+                            last_line.width() as u16 % frame_size.width + last_word.len() as u16;
                     }
                     width
                 }
                 + 1,
-            prompt_block.y + std::cmp::min(prompt_height, max_prompt_height) - 1,
+            prompt_block.y + std::cmp::min(prompt_content_height, prompt_block_max_height) - 1,
         ),
     }
 
     // Chat block
-    let chat = {
-        let mut messages: String = app.chat.iter().map(|m| m.to_string()).collect();
 
+    let chat_paragraph = {
+        let mut messages: String = app.chat.iter().map(|m| m.to_string()).collect();
         messages.push_str(app.answer.as_str());
 
-        let messages_height = {
-            let mut height: u16 = 0;
-            for msg in &app.chat {
-                height += 1;
-                for line in msg.lines() {
-                    height += 1;
-                    height += line.width() as u16 / app_area.width;
+        let messages_height = messages
+            .lines()
+            .fold(messages.lines().count() + 3, |acc, line| {
+                acc + line.width() / frame_size.width as usize
+            });
+
+        let diff: isize = messages_height as isize - chat_block_height as isize;
+
+        let mut scroll: u16 = if diff > 0 { diff as u16 } else { 0 };
+
+        if let FocusedBlock::Chat = app.focused_block {
+            if diff > 0 {
+                let diff = diff as u16;
+
+                if app.scroll >= diff {
+                    app.scroll = diff;
+                    app.chat_scroll_state.last()
+                } else {
+                    scroll = app.scroll;
+                    app.chat_scroll_state.position(app.scroll);
                 }
             }
-
-            for line in app.answer.lines() {
-                height += 1;
-                height += line.width() as u16 / app_area.width;
-            }
-            height
-        };
-
-        let mut scroll = 0;
-        let height_diff = messages_height as i32
-            - std::cmp::max(chat_height, max_chat_height) as i32
-            - app.chat.len() as i32
-            + 1;
-        if height_diff > 0 {
-            scroll = height_diff;
-        }
-        if let FocusedBlock::Chat = app.focused_block {
-            if height_diff + app.scroll >= 0 {
-                scroll = height_diff + app.scroll;
-            }
-
-            // scroll up case
-            if height_diff > 0 && -app.scroll > height_diff {
-                app.scroll = -height_diff;
-            }
-            // Scroll down case
-            if height_diff > 0 && app.scroll > 0 {
-                app.scroll = 0;
-            }
+        } else {
+            app.chat_scroll = diff as u16;
+            app.chat_scroll_state.last();
         }
 
         Paragraph::new({
@@ -242,7 +231,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 .into_text()
                 .unwrap_or(Text::from(messages))
         })
-        .scroll((scroll as u16, 0))
+        .scroll((scroll, 0))
         .wrap(Wrap { trim: false })
         .block(
             Block::default()
@@ -263,11 +252,41 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     };
 
     // Draw
-    frame.render_widget(chat, chat_block);
-    frame.render_widget(prompt, prompt_block);
+    let chat_messages_height = {
+        let mut height: u16 = 0;
+        for msg in &app.chat {
+            for line in msg.lines() {
+                height += 1;
+                height += line.width() as u16 / frame_size.width;
+            }
+        }
+
+        for line in app.answer.lines() {
+            height += 1;
+            height += line.width() as u16 / frame_size.width;
+        }
+        height
+    };
+
+    app.chat_scroll_state = app.chat_scroll_state.content_length(chat_messages_height);
+
+    frame.render_widget(chat_paragraph, chat_block);
+
+    if chat_messages_height > chat_block.height {
+        frame.render_stateful_widget(
+            Scrollbar::default()
+                .orientation(ScrollbarOrientation::VerticalRight)
+                .begin_symbol(Some("↑"))
+                .end_symbol(Some("↓")),
+            chat_block,
+            &mut app.chat_scroll_state,
+        );
+    }
+
+    frame.render_widget(prompt_paragraph, prompt_block);
 
     if app.show_history_popup {
-        let area = centered_rect(80, 80, app_area);
+        let area = centered_rect(80, 80, frame_size);
 
         let (history_block, preview_block) = {
             let chunks = Layout::default()
@@ -332,16 +351,9 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
             if height_diff > 0 {
                 if let FocusedBlock::Preview = app.focused_block {
-                    if app.scroll < 0 {
-                        app.scroll = 0;
-                        scroll = app.scroll as u16;
-                    }
-                    if app.scroll > height_diff {
-                        app.scroll = height_diff;
-                        scroll = app.scroll as u16;
-                    }
-                    if app.scroll >= 0 {
-                        scroll = app.scroll as u16;
+                    if app.scroll > height_diff as u16 {
+                        app.scroll = height_diff as u16;
+                        scroll = app.scroll;
                     }
                 }
             }
@@ -409,7 +421,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 .border_type(BorderType::Rounded)
                 .border_style(Style::default().fg(Color::Yellow)),
         );
-        let area = help_rect(app_area);
+        let area = help_rect(frame_size);
         frame.render_widget(Clear, area);
         frame.render_widget(block, area);
     }
@@ -436,7 +448,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 .border_type(BorderType::Rounded)
                 .border_style(Style::default().fg(border_color)),
         );
-        let area = notification_rect(i as u16, app_area);
+        let area = notification_rect(i as u16, frame_size);
         frame.render_widget(Clear, area);
         frame.render_widget(block, area);
     }

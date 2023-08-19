@@ -32,11 +32,13 @@ pub fn handle_key_events(
                 app.running = false;
             }
 
+            // Terminate the stream response
             KeyCode::Char('t') => {
                 app.terminate_response_signal
                     .store(true, std::sync::atomic::Ordering::Relaxed);
             }
 
+            // Submit the prompt
             KeyCode::Enter => {
                 let user_input: String = app.prompt.drain(3..).collect();
                 let user_input = user_input.trim();
@@ -80,7 +82,10 @@ pub fn handle_key_events(
                         app.history_thread_index += 1;
                     }
                 }
-                _ => app.scroll += 1,
+                _ => {
+                    app.scroll = app.scroll.saturating_add(1);
+                    app.chat_scroll_state = app.chat_scroll_state.position(app.scroll);
+                }
             },
 
             // scroll up
@@ -90,7 +95,11 @@ pub fn handle_key_events(
                         app.history_thread_index -= 1;
                     }
                 }
-                _ => app.scroll -= 1,
+                _ => {
+                    app.scroll = app.scroll.saturating_sub(1);
+
+                    app.chat_scroll_state = app.chat_scroll_state.position(app.scroll);
+                }
             },
 
             // Clear the prompt
@@ -176,11 +185,16 @@ pub fn handle_key_events(
                     }
                 } else {
                     match app.focused_block {
-                        FocusedBlock::Chat => app.focused_block = FocusedBlock::Prompt,
-                        FocusedBlock::Prompt => app.focused_block = FocusedBlock::Chat,
+                        FocusedBlock::Chat => {
+                            app.scroll = 0;
+                            app.focused_block = FocusedBlock::Prompt;
+                        }
+                        FocusedBlock::Prompt => {
+                            app.scroll = app.chat_scroll;
+                            app.focused_block = FocusedBlock::Chat;
+                        }
                         _ => (),
                     }
-                    app.scroll = 0
                 }
             }
 
@@ -216,14 +230,12 @@ pub fn handle_key_events(
         },
 
         Mode::Insert => match key_event.code {
-            // New line
             KeyCode::Enter => app.prompt.push('\n'),
 
             KeyCode::Char(c) => {
                 app.prompt.push(c);
             }
 
-            // Remove char from the prompt
             KeyCode::Backspace => {
                 if app.prompt.len() > 3 {
                     app.prompt.pop();

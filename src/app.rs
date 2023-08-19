@@ -6,6 +6,7 @@ use crate::config::Config;
 use crate::notification::Notification;
 use crate::spinner::Spinner;
 use crossterm::event::KeyCode;
+use tui::widgets::scrollbar::ScrollbarState;
 
 use std::sync::Arc;
 
@@ -31,7 +32,7 @@ pub struct App {
     pub mode: Mode,
     pub running: bool,
     pub chat: Vec<String>,
-    pub scroll: i32,
+    pub scroll: u16,
     pub previous_key: KeyCode,
     pub focused_block: FocusedBlock,
     pub show_help_popup: bool,
@@ -44,6 +45,8 @@ pub struct App {
     pub notifications: Vec<Notification>,
     pub spinner: Spinner,
     pub terminate_response_signal: Arc<AtomicBool>,
+    pub chat_scroll_state: ScrollbarState,
+    pub chat_scroll: u16,
 }
 
 impl App {
@@ -66,6 +69,8 @@ impl App {
             notifications: Vec::new(),
             spinner: Spinner::default(),
             terminate_response_signal: Arc::new(AtomicBool::new(false)),
+            chat_scroll_state: ScrollbarState::default(),
+            chat_scroll: 0,
         }
     }
 
