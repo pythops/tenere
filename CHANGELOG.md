@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Features
 
 - Stop the stream response with the key `t`
+- Add scrollbar for the chat block
 
 ## [0.7] 12/08/2023
 
