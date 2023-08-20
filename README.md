@@ -129,6 +129,8 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 
 `h` : Show chat history
 
+`t` : Stop the stream response
+
 `q`: to quit the app
 
 `?`: to show the help pop-up. You can dismiss it with `Esc`
@@ -138,7 +140,7 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 ## 🧭 Roadmap
 
 - [ ] Highlight the chat messages
-- [ ] Show the scroll bar
+- [x] Show the scroll bar
 - [ ] Support more models
 
 <br>
