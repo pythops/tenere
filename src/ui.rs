@@ -198,10 +198,12 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         let mut messages: String = app.chat.iter().map(|m| m.to_string()).collect();
         messages.push_str(app.answer.as_str());
 
-        let messages_height = messages
-            .lines()
-            .fold(messages.lines().count() + 3, |acc, line| {
-                acc + line.width() / frame_size.width as usize
+        let nb_lines = termimad::term_text(messages.as_str()).lines.len() + 3;
+        let messages_height = termimad::term_text(messages.as_str())
+            .lines
+            .iter()
+            .fold(nb_lines, |acc, line| {
+                acc + line.visible_length() / frame_size.width as usize
             });
 
         let diff: isize = messages_height as isize - chat_block_height as isize;
