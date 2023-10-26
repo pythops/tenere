@@ -117,7 +117,7 @@ impl Config {
             .join("tenere")
             .join("config.toml");
 
-        let config = std::fs::read_to_string(conf_path).unwrap_or(String::new());
+        let config = std::fs::read_to_string(conf_path).unwrap_or_default();
         let app_config: Config = toml::from_str(&config).unwrap();
         app_config
     }

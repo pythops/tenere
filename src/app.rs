@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 
 use crate::config::Config;
+use crate::formatter::Formatter;
 use crate::notification::Notification;
 use crate::spinner::Spinner;
 use crossterm::event::KeyCode;
-use tui::widgets::scrollbar::ScrollbarState;
+use tui::widgets::ScrollbarState;
 
 use std::sync::Arc;
 
@@ -26,13 +27,12 @@ pub enum FocusedBlock {
     Preview,
 }
 
-#[derive(Debug)]
-pub struct App {
+pub struct App<'a> {
     pub prompt: String,
     pub mode: Mode,
     pub running: bool,
     pub chat: Vec<String>,
-    pub scroll: u16,
+    pub scroll: usize,
     pub previous_key: KeyCode,
     pub focused_block: FocusedBlock,
     pub show_help_popup: bool,
@@ -46,11 +46,12 @@ pub struct App {
     pub spinner: Spinner,
     pub terminate_response_signal: Arc<AtomicBool>,
     pub chat_scroll_state: ScrollbarState,
-    pub chat_scroll: u16,
+    pub chat_scroll: usize,
+    pub formatter: Formatter<'a>,
 }
 
-impl App {
-    pub fn new(config: Arc<Config>) -> Self {
+impl<'a> App<'a> {
+    pub fn new(config: Arc<Config>, formatter: Formatter<'a>) -> Self {
         Self {
             running: true,
             prompt: String::from(">_ "),
@@ -71,6 +72,7 @@ impl App {
             terminate_response_signal: Arc::new(AtomicBool::new(false)),
             chat_scroll_state: ScrollbarState::default(),
             chat_scroll: 0,
+            formatter,
         }
     }
 

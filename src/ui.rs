@@ -5,7 +5,6 @@ use std;
 
 use crate::app::{App, FocusedBlock, Mode};
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
@@ -97,7 +96,7 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
-pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
+pub fn render(app: &mut App, frame: &mut Frame) {
     // Layout
     let frame_size = frame.size();
 
@@ -146,8 +145,8 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             if diff < 0 {
                 app.scroll = 0;
             } else {
-                app.scroll = diff as u16;
-                scroll = app.scroll;
+                app.scroll = diff as usize;
+                scroll = app.scroll as u16;
             }
         }
 
@@ -199,15 +198,13 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         let mut messages: String = app.chat.iter().map(|m| m.to_string()).collect();
         messages.push_str(app.answer.as_str());
 
-        let nb_lines = termimad::term_text(messages.as_str()).lines.len() + 3;
-        let messages_height = termimad::term_text(messages.as_str())
-            .lines
-            .iter()
-            .fold(nb_lines, |acc, line| {
-                acc + line.visible_length() / frame_size.width as usize
-            });
+        let text = app.formatter.format(&messages);
+        let nb_lines = text.lines.len() + 3;
+        let messages_height = text.lines.iter().fold(nb_lines, |acc, line| {
+            acc + line.width() / frame_size.width as usize
+        });
 
-        messages_height as u16
+        messages_height
     };
 
     let chat_paragraph = {
@@ -222,16 +219,16 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             if diff > 0 {
                 let diff = diff as u16;
 
-                if app.scroll >= diff {
-                    app.scroll = diff;
+                if app.scroll >= diff.into() {
+                    app.scroll = diff.into();
                     app.chat_scroll_state.last()
                 } else {
-                    scroll = app.scroll;
+                    scroll = app.scroll as u16;
                     app.chat_scroll_state.position(app.scroll);
                 }
             }
         } else {
-            app.chat_scroll = diff as u16;
+            app.chat_scroll = diff as usize;
             app.chat_scroll_state.last();
         }
 
@@ -243,17 +240,11 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             };
             let assets = HighlightingAssets::from_binary();
             let controller = Controller::new(&config, &assets);
-            let input = Input::from_bytes(messages.as_bytes())
-                .name("chat.md")
-                .kind("file")
-                .title("Chat");
+            let input = Input::from_bytes(messages.as_bytes()).name("Readme.markdown");
             controller
                 .run(vec![input.into()], Some(&mut buffer))
                 .unwrap();
-            termimad::term_text(&buffer)
-                .to_string()
-                .into_text()
-                .unwrap_or(Text::from(messages))
+            buffer.into_text().unwrap_or(Text::from(buffer))
         })
         .scroll((scroll, 0))
         .wrap(Wrap { trim: false })
@@ -281,7 +272,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
     frame.render_widget(chat_paragraph, chat_block);
 
-    if chat_messages_height > chat_block.height {
+    if chat_messages_height > chat_block.height.into() {
         frame.render_stateful_widget(
             Scrollbar::default()
                 .orientation(ScrollbarOrientation::VerticalRight)
@@ -360,9 +351,9 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
             if height_diff > 0 {
                 if let FocusedBlock::Preview = app.focused_block {
-                    if app.scroll > height_diff as u16 {
-                        app.scroll = height_diff as u16;
-                        scroll = app.scroll;
+                    if app.scroll > height_diff as usize {
+                        app.scroll = height_diff as usize;
+                        scroll = app.scroll as u16;
                     }
                 }
             }
@@ -370,10 +361,11 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         };
 
         let preview = Paragraph::new({
-            termimad::term_text(preview_chat.as_str())
-                .to_string()
-                .into_text()
-                .unwrap_or(Text::from(preview_chat))
+            if !preview_chat.is_empty() {
+                app.formatter.format(preview_chat.as_str())
+            } else {
+                Text::from("")
+            }
         })
         .wrap(Wrap { trim: false })
         .scroll((preview_scroll, 0))
@@ -414,22 +406,17 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             app.config.archive_file_name
         );
 
-        let block = Paragraph::new(
-            termimad::term_text(help.as_str())
-                .to_string()
-                .into_text()
-                .unwrap_or(Text::from(help)),
-        )
-        .wrap(Wrap { trim: false })
-        .block(
-            Block::default()
-                .title(" Help ")
-                .title_alignment(tui::layout::Alignment::Center)
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .border_type(BorderType::Rounded)
-                .border_style(Style::default().fg(Color::Yellow)),
-        );
+        let block = Paragraph::new(app.formatter.format(help.as_str()))
+            .wrap(Wrap { trim: false })
+            .block(
+                Block::default()
+                    .title(" Help ")
+                    .title_alignment(tui::layout::Alignment::Center)
+                    .borders(Borders::ALL)
+                    .style(Style::default())
+                    .border_type(BorderType::Rounded)
+                    .border_style(Style::default().fg(Color::Yellow)),
+            );
         let area = help_rect(frame_size);
         frame.render_widget(Clear, area);
         frame.render_widget(block, area);
@@ -442,12 +429,11 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             NotificationLevel::Error => Color::Red,
         };
 
-        let block = Paragraph::new(
-            termimad::term_text(n.message.clone().as_str())
-                .to_string()
-                .into_text()
-                .unwrap_or(Text::from(n.message.clone())),
-        )
+        let block = Paragraph::new(if !n.message.is_empty() {
+            app.formatter.format(n.message.as_str())
+        } else {
+            Text::from("")
+        })
         .wrap(Wrap { trim: false })
         .alignment(tui::layout::Alignment::Center)
         .block(

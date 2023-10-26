@@ -19,3 +19,5 @@ pub mod notification;
 pub mod llm;
 
 pub mod spinner;
+
+pub mod formatter;
