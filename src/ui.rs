@@ -1,5 +1,6 @@
 use crate::notification::NotificationLevel;
 use ansi_to_tui::IntoText;
+use bat::{assets::HighlightingAssets, config::Config, controller::Controller, Input};
 use std;
 
 use crate::app::{App, FocusedBlock, Mode};
@@ -235,7 +236,21 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         }
 
         Paragraph::new({
-            termimad::term_text(messages.as_str())
+            let mut buffer = String::new();
+            let config = Config {
+                colored_output: true,
+                ..Default::default()
+            };
+            let assets = HighlightingAssets::from_binary();
+            let controller = Controller::new(&config, &assets);
+            let input = Input::from_bytes(messages.as_bytes())
+                .name("chat.md")
+                .kind("file")
+                .title("Chat");
+            controller
+                .run(vec![input.into()], Some(&mut buffer))
+                .unwrap();
+            termimad::term_text(&buffer)
                 .to_string()
                 .into_text()
                 .unwrap_or(Text::from(messages))
