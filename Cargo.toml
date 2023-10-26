@@ -28,3 +28,4 @@ serde = { version = "1.0", features = ["derive"] }
 dirs = "5.0.1"
 regex = "1.9.3"
 colored = "2.0.4"
+bat = "0.24.0"
