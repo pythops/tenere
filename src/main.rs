@@ -4,6 +4,7 @@ use tenere::app::{App, AppResult};
 use tenere::cli;
 use tenere::config::Config;
 use tenere::event::{Event, EventHandler};
+use tenere::formatter::Formatter;
 use tenere::handler::handle_key_events;
 use tenere::llm::LLMAnswer;
 use tenere::tui::Tui;
@@ -20,7 +21,17 @@ fn main() -> AppResult<()> {
     cli::cli().version(crate_version!()).get_matches();
 
     let config = Arc::new(Config::load());
-    let mut app = App::new(config.clone());
+
+    let formatter_config = bat::config::Config {
+        colored_output: true,
+        ..Default::default()
+    };
+    let formatter_assets = bat::assets::HighlightingAssets::from_binary();
+
+    let formatter = Formatter::new(&formatter_config, &formatter_assets);
+
+    let mut app = App::new(config.clone(), formatter);
+
     let llm = Arc::new(LLMModel::init(LLMBackend::ChatGPT, config));
 
     let backend = CrosstermBackend::new(io::stderr());
