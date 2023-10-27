@@ -1,6 +1,4 @@
 use crate::notification::NotificationLevel;
-use ansi_to_tui::IntoText;
-use bat::{assets::HighlightingAssets, config::Config, controller::Controller, Input};
 use std;
 
 use crate::app::{App, FocusedBlock, Mode};
@@ -232,38 +230,25 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             app.chat_scroll_state.last();
         }
 
-        Paragraph::new({
-            let mut buffer = String::new();
-            let config = Config {
-                colored_output: true,
-                ..Default::default()
-            };
-            let assets = HighlightingAssets::from_binary();
-            let controller = Controller::new(&config, &assets);
-            let input = Input::from_bytes(messages.as_bytes()).name("Readme.markdown");
-            controller
-                .run(vec![input.into()], Some(&mut buffer))
-                .unwrap();
-            buffer.into_text().unwrap_or(Text::from(buffer))
-        })
-        .scroll((scroll, 0))
-        .wrap(Wrap { trim: false })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .border_type(match app.focused_block {
-                    FocusedBlock::Chat => BorderType::Thick,
-                    _ => BorderType::Rounded,
-                })
-                .border_style(match app.focused_block {
-                    FocusedBlock::Chat => match app.mode {
-                        Mode::Insert => Style::default().fg(Color::Green),
-                        Mode::Normal => Style::default().fg(Color::Yellow),
-                    },
-                    _ => Style::default(),
-                }),
-        )
+        Paragraph::new(app.formatter.format(&messages))
+            .scroll((scroll, 0))
+            .wrap(Wrap { trim: false })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(Style::default())
+                    .border_type(match app.focused_block {
+                        FocusedBlock::Chat => BorderType::Thick,
+                        _ => BorderType::Rounded,
+                    })
+                    .border_style(match app.focused_block {
+                        FocusedBlock::Chat => match app.mode {
+                            Mode::Insert => Style::default().fg(Color::Green),
+                            Mode::Normal => Style::default().fg(Color::Yellow),
+                        },
+                        _ => Style::default(),
+                    }),
+            )
     };
 
     // Draw
