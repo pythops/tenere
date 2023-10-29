@@ -250,7 +250,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     frame.render_widget(prompt_paragraph, prompt_block);
 
-    if let FocusedBlock::History = app.focused_block {
+    if let FocusedBlock::History | FocusedBlock::Preview = app.focused_block {
         let area = centered_rect(80, 80, frame_size);
 
         let (history_block, preview_block) = {
