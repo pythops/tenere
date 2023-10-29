@@ -193,29 +193,27 @@ pub fn handle_key_events(
             },
 
             // Switch the focus
-            KeyCode::Tab => {
-                match app.focused_block {
-                    FocusedBlock::Chat => {
-                        app.scroll = 0;
-                        app.focused_block = FocusedBlock::Prompt;
-                    }
-                    FocusedBlock::Prompt => {
-                        app.scroll = 0;
-                        app.focused_block = FocusedBlock::Chat;
-                    }
-
-                    //TODO: focus on history popup
-                    _ => (),
+            KeyCode::Tab => match app.focused_block {
+                FocusedBlock::Chat => {
+                    app.scroll = 0;
+                    app.focused_block = FocusedBlock::Prompt;
                 }
-                // if app.show_history_popup {
-                //     match app.focused_block {
-                //         FocusedBlock::Preview => app.focused_block = FocusedBlock::History,
-                //         FocusedBlock::History => app.focused_block = FocusedBlock::Preview,
-                //         _ => (),
-                //     }
-                // } else {
-                // }
-            }
+                FocusedBlock::Prompt => {
+                    app.scroll =
+                        app.chat.formatted_chat.height() + app.answer.formatted_answer.height();
+                    app.focused_block = FocusedBlock::Chat;
+                }
+
+                FocusedBlock::History => {
+                    app.scroll = 0;
+                    app.focused_block = FocusedBlock::Preview
+                }
+                FocusedBlock::Preview => {
+                    app.scroll = 0;
+                    app.focused_block = FocusedBlock::History
+                }
+                FocusedBlock::Help => (),
+            },
 
             // kill the app
             KeyCode::Char('c') | KeyCode::Char('C') => {
