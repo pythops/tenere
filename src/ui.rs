@@ -5,13 +5,11 @@ use crate::app::{App, FocusedBlock, Mode};
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    text::{Line, Span, Text},
-    widgets::{
-        Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Scrollbar,
-        ScrollbarOrientation, Wrap,
-    },
+    text::{Line, Text},
+    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
+
 use unicode_width::UnicodeWidthStr;
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -103,7 +101,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     let prompt_content_height = {
         let mut height: u16 = 1;
-        for line in app.prompt.lines() {
+        for line in app.prompt.message.lines() {
             height += 1;
             height += line.width() as u16 / frame_size.width;
         }
@@ -148,7 +146,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             }
         }
 
-        Paragraph::new(app.prompt.as_str())
+        Paragraph::new(app.prompt.message.as_str())
             .wrap(Wrap { trim: false })
             .scroll((scroll, 0))
             .style(Style::default())
@@ -176,7 +174,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         Mode::Insert => frame.set_cursor(
             prompt_block.x
                 + {
-                    let last_line = app.prompt.lines().last().unwrap_or("");
+                    let last_line = app.prompt.message.lines().last().unwrap_or("");
                     let mut width = last_line.len() as u16;
                     if last_line.len() as u16 > frame_size.width {
                         let last_word = last_line.rsplit(' ').last().unwrap_or("");
@@ -191,14 +189,15 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     }
 
     // Chat block
+    let chat_text = {
+        let mut c = app.chat.formatted_chat.clone();
+        c.extend(app.answer.formatted_answer.clone());
+        c
+    };
 
     let chat_messages_height = {
-        let mut messages: String = app.chat.iter().map(|m| m.to_string()).collect();
-        messages.push_str(app.answer.as_str());
-
-        let text = app.formatter.format(&messages);
-        let nb_lines = text.lines.len() + 3;
-        let messages_height = text.lines.iter().fold(nb_lines, |acc, line| {
+        let nb_lines = chat_text.lines.len() + 3;
+        let messages_height = chat_text.lines.iter().fold(nb_lines, |acc, line| {
             acc + line.width() / frame_size.width as usize
         });
 
@@ -206,9 +205,6 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     };
 
     let chat_paragraph = {
-        let mut messages: String = app.chat.iter().map(|m| m.to_string()).collect();
-        messages.push_str(app.answer.as_str());
-
         let diff: isize = chat_messages_height as isize - chat_block_height as isize;
 
         let mut scroll: u16 = if diff > 0 { diff as u16 } else { 0 };
@@ -219,18 +215,15 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
                 if app.scroll >= diff.into() {
                     app.scroll = diff.into();
-                    app.chat_scroll_state.last()
                 } else {
                     scroll = app.scroll as u16;
-                    app.chat_scroll_state.position(app.scroll);
                 }
             }
         } else {
-            app.chat_scroll = diff as usize;
-            app.chat_scroll_state.last();
+            app.scroll = diff as usize;
         }
 
-        Paragraph::new(app.formatter.format(&messages))
+        Paragraph::new(chat_text)
             .scroll((scroll, 0))
             .wrap(Wrap { trim: false })
             .block(
@@ -253,24 +246,11 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     // Draw
 
-    app.chat_scroll_state = app.chat_scroll_state.content_length(chat_messages_height);
-
     frame.render_widget(chat_paragraph, chat_block);
-
-    if chat_messages_height > chat_block.height.into() {
-        frame.render_stateful_widget(
-            Scrollbar::default()
-                .orientation(ScrollbarOrientation::VerticalRight)
-                .begin_symbol(Some("↑"))
-                .end_symbol(Some("↓")),
-            chat_block,
-            &mut app.chat_scroll_state,
-        );
-    }
 
     frame.render_widget(prompt_paragraph, prompt_block);
 
-    if app.show_history_popup {
+    if let FocusedBlock::History = app.focused_block {
         let area = centered_rect(80, 80, frame_size);
 
         let (history_block, preview_block) = {
@@ -282,17 +262,17 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         };
 
         let history = List::new({
-            if app.history.is_empty() {
-                vec![ListItem::new(Line::from(Span::from("History is empty")))]
+            if app.history.chat.is_empty() {
+                vec![ListItem::new(Line::raw("History is empty"))]
             } else {
                 app.history
+                    .formatted_chat
                     .iter()
                     .enumerate()
-                    .map(|(i, c)| {
-                        let msg = c[0].clone().strip_prefix(" : ").unwrap().to_string();
-                        let content = Line::from(Span::from(msg));
-                        ListItem::new(content).style({
-                            if app.history_thread_index == i {
+                    .map(|(i, chat)| {
+                        let msg = chat.lines[0].clone();
+                        ListItem::new(msg).style({
+                            if app.history.index == i {
                                 Style::default().bg(Color::Rgb(50, 54, 26))
                             } else {
                                 Style::default()
@@ -315,19 +295,16 @@ pub fn render(app: &mut App, frame: &mut Frame) {
                 }),
         );
 
-        let preview_chat: String = if !app.history.is_empty() {
-            app.history[app.history_thread_index]
-                .iter()
-                .map(|m| m.to_string())
-                .collect()
+        let preview_chat: Text = if !app.history.chat.is_empty() {
+            app.history.formatted_chat[app.history.index].clone()
         } else {
-            String::new()
+            Text::from("")
         };
 
         let preview_scroll = {
             let mut height: u16 = 0;
             let mut scroll: u16 = 0;
-            for line in preview_chat.lines() {
+            for line in &preview_chat.lines {
                 height += 1;
                 height += line.width() as u16 / preview_block.width;
             }
@@ -345,53 +322,47 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             scroll
         };
 
-        let preview = Paragraph::new({
-            if !preview_chat.is_empty() {
-                app.formatter.format(preview_chat.as_str())
-            } else {
-                Text::from("")
-            }
-        })
-        .wrap(Wrap { trim: false })
-        .scroll((preview_scroll, 0))
-        .block(
-            Block::default()
-                .title(" Preview ")
-                .title_alignment(tui::layout::Alignment::Center)
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .border_type(BorderType::Rounded)
-                .border_style(match app.focused_block {
-                    FocusedBlock::Preview => Style::default().fg(Color::Yellow),
-                    _ => Style::default(),
-                }),
-        );
+        let preview = Paragraph::new(preview_chat)
+            .wrap(Wrap { trim: false })
+            .scroll((preview_scroll, 0))
+            .block(
+                Block::default()
+                    .title(" Preview ")
+                    .title_alignment(tui::layout::Alignment::Center)
+                    .borders(Borders::ALL)
+                    .style(Style::default())
+                    .border_type(BorderType::Rounded)
+                    .border_style(match app.focused_block {
+                        FocusedBlock::Preview => Style::default().fg(Color::Yellow),
+                        _ => Style::default(),
+                    }),
+            );
 
         frame.render_widget(Clear, area);
         frame.render_widget(history, history_block);
         frame.render_widget(preview, preview_block);
     }
 
-    if app.show_help_popup {
+    if let FocusedBlock::Help = app.focused_block {
         let help = format!(
             "
-`i`          : Switch to Insert mode
-`Esc`        : Switch to Normal mode
-`dd`         : Clear the prompt
-`n`          : Start new chat and save the previous one to the history
-`s`          : Save the chat to `{}` file in the current directory
-`Tab`        : Switch the focus
-`h`          : Show history
-`t`          : Stop the stream response
+`i`            : Switch to Insert mode
+`Esc`          : Switch to Normal mode
+`dd`           : Clear the prompt
+`n`            : Start new chat and save the previous one to the history
+`s`            : Save the chat to `{}` file in the current directory
+`Tab`          : Switch the focus
+`h`            : Show history
+`t`            : Stop the stream response
 `j` or `Down`  : Scroll down
 `k` or `Up`    : Scroll up
-`?`          : show help
-`q`          : Quit
+`?`            : show help
+`q`            : Quit
 ",
             app.config.archive_file_name
         );
 
-        let block = Paragraph::new(app.formatter.format(help.as_str()))
+        let block = Paragraph::new(help.as_str())
             .wrap(Wrap { trim: false })
             .block(
                 Block::default()
@@ -415,7 +386,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         };
 
         let block = Paragraph::new(if !n.message.is_empty() {
-            app.formatter.format(n.message.as_str())
+            Text::from(n.message.as_str())
         } else {
             Text::from("")
         })
