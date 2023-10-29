@@ -3,11 +3,10 @@ use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 
 use crate::config::Config;
-use crate::formatter::Formatter;
 use crate::notification::Notification;
 use crate::spinner::Spinner;
 use crossterm::event::KeyCode;
-use tui::widgets::ScrollbarState;
+use tui::text::{Line, Text};
 
 use std::sync::Arc;
 
@@ -25,54 +24,76 @@ pub enum FocusedBlock {
     Chat,
     History,
     Preview,
+    Help,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct History<'a> {
+    pub show: bool,
+    pub index: usize,
+    pub chat: Vec<Vec<String>>,
+    pub formatted_chat: Vec<Text<'a>>,
+}
+
+#[derive(Debug, Default)]
+pub struct Chat<'a> {
+    pub messages: Vec<String>,
+    pub formatted_chat: Text<'a>,
+}
+
+#[derive(Debug)]
+pub struct Prompt {
+    pub message: String,
+}
+
+impl Default for Prompt {
+    fn default() -> Self {
+        Self {
+            message: String::from(">_ "),
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Answer<'a> {
+    pub answer: String,
+    pub formatted_answer: Text<'a>,
 }
 
 pub struct App<'a> {
-    pub prompt: String,
-    pub mode: Mode,
     pub running: bool,
-    pub chat: Vec<String>,
     pub scroll: usize,
+    pub prompt: Prompt,
+    pub mode: Mode,
+    pub chat: Chat<'a>,
     pub previous_key: KeyCode,
     pub focused_block: FocusedBlock,
-    pub show_help_popup: bool,
     pub llm_messages: Vec<HashMap<String, String>>,
-    pub answer: String,
-    pub history: Vec<Vec<String>>,
-    pub show_history_popup: bool,
-    pub history_thread_index: usize,
+    pub answer: Answer<'a>,
+    pub history: History<'a>,
     pub config: Arc<Config>,
     pub notifications: Vec<Notification>,
     pub spinner: Spinner,
     pub terminate_response_signal: Arc<AtomicBool>,
-    pub chat_scroll_state: ScrollbarState,
-    pub chat_scroll: usize,
-    pub formatter: Formatter<'a>,
 }
 
 impl<'a> App<'a> {
-    pub fn new(config: Arc<Config>, formatter: Formatter<'a>) -> Self {
+    pub fn new(config: Arc<Config>) -> Self {
         Self {
             running: true,
-            prompt: String::from(">_ "),
-            mode: Mode::Normal,
-            chat: Vec::new(),
             scroll: 0,
+            prompt: Prompt::default(),
+            mode: Mode::Normal,
+            chat: Chat::default(),
             previous_key: KeyCode::Null,
             focused_block: FocusedBlock::Prompt,
-            show_help_popup: false,
             llm_messages: Vec::new(),
-            answer: String::new(),
-            history: Vec::new(),
-            show_history_popup: false,
-            history_thread_index: 0,
+            answer: Answer::default(),
+            history: History::default(),
             config,
             notifications: Vec::new(),
             spinner: Spinner::default(),
             terminate_response_signal: Arc::new(AtomicBool::new(false)),
-            chat_scroll_state: ScrollbarState::default(),
-            chat_scroll: 0,
-            formatter,
         }
     }
 
@@ -81,9 +102,11 @@ impl<'a> App<'a> {
         self.notifications.iter_mut().for_each(|n| n.ttl -= 1);
 
         if self.spinner.active {
-            self.chat.pop();
+            self.chat.formatted_chat.lines.pop();
             self.chat
-                .push(format!("🤖: Waiting {}", self.spinner.draw()));
+                .formatted_chat
+                .lines
+                .push(Line::raw(format!("🤖: Waiting {}", self.spinner.draw())));
             self.spinner.update();
         }
     }
