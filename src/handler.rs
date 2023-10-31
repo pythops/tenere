@@ -93,25 +93,42 @@ pub fn handle_key_events(
             // scroll down
             KeyCode::Char('j') | KeyCode::Down => match app.focused_block {
                 FocusedBlock::History => {
-                    if app.history.index < app.history.chat.len() - 1 {
+                    if !app.history.formatted_chat.is_empty()
+                        && app.history.index < app.history.chat.len() - 1
+                    {
                         app.history.index += 1;
                     }
                 }
-                _ => {
-                    app.scroll = app.scroll.saturating_add(1);
+
+                FocusedBlock::Chat => {
+                    app.chat.scroll = app.chat.scroll.saturating_add(1);
                 }
+
+                FocusedBlock::Prompt => {
+                    app.prompt.scroll = app.prompt.scroll.saturating_add(1);
+                }
+
+                FocusedBlock::Preview => {
+                    app.history.scroll = app.history.scroll.saturating_add(1);
+                }
+                _ => (),
             },
 
             // scroll up
             KeyCode::Char('k') | KeyCode::Up => match app.focused_block {
-                FocusedBlock::History => {
-                    if app.history.index > 0 {
-                        app.history.index -= 1;
-                    }
+                FocusedBlock::History => app.history.index = app.history.index.saturating_sub(1),
+
+                FocusedBlock::Preview => {
+                    app.history.scroll = app.history.scroll.saturating_sub(1);
                 }
-                _ => {
-                    app.scroll = app.scroll.saturating_sub(1);
+
+                FocusedBlock::Chat => {
+                    app.chat.scroll = app.chat.scroll.saturating_sub(1);
                 }
+                FocusedBlock::Prompt => {
+                    app.prompt.scroll = app.prompt.scroll.saturating_sub(1);
+                }
+                _ => (),
             },
 
             // Clear the prompt
@@ -130,7 +147,9 @@ pub fn handle_key_events(
                 app.history.chat.push(app.chat.messages.clone());
                 app.chat = Chat::default();
                 app.llm_messages = Vec::new();
-                app.scroll = 0;
+
+                app.chat.scroll = 0;
+                app.prompt.scroll = 0;
             }
 
             // Save chat
@@ -195,22 +214,23 @@ pub fn handle_key_events(
             // Switch the focus
             KeyCode::Tab => match app.focused_block {
                 FocusedBlock::Chat => {
-                    app.scroll = 0;
+                    app.prompt.scroll = 0;
                     app.focused_block = FocusedBlock::Prompt;
                 }
                 FocusedBlock::Prompt => {
-                    app.scroll =
-                        app.chat.formatted_chat.height() + app.answer.formatted_answer.height();
+                    app.chat.scroll = (app.chat.formatted_chat.height()
+                        + app.answer.formatted_answer.height())
+                        as u16;
                     app.focused_block = FocusedBlock::Chat;
                 }
 
                 FocusedBlock::History => {
-                    app.scroll = 0;
-                    app.focused_block = FocusedBlock::Preview
+                    app.focused_block = FocusedBlock::Preview;
+                    app.history.scroll = 0;
                 }
                 FocusedBlock::Preview => {
-                    app.scroll = 0;
-                    app.focused_block = FocusedBlock::History
+                    app.focused_block = FocusedBlock::History;
+                    app.history.scroll = 0;
                 }
                 FocusedBlock::Help => (),
             },
