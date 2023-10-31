@@ -34,6 +34,7 @@ pub struct History<'a> {
     pub chat: Vec<Vec<String>>,
     pub formatted_chat: Vec<Text<'a>>,
     pub scroll: u16,
+    pub length: u16,
 }
 
 #[derive(Debug, Default)]
@@ -41,12 +42,14 @@ pub struct Chat<'a> {
     pub messages: Vec<String>,
     pub formatted_chat: Text<'a>,
     pub scroll: u16,
+    pub length: u16,
 }
 
 #[derive(Debug)]
 pub struct Prompt {
     pub message: String,
     pub scroll: u16,
+    pub length: u16,
 }
 
 impl Default for Prompt {
@@ -54,6 +57,7 @@ impl Default for Prompt {
         Self {
             message: String::from(">_ "),
             scroll: 0,
+            length: 0,
         }
     }
 }
@@ -113,3 +117,4 @@ impl<'a> App<'a> {
         }
     }
 }
+
