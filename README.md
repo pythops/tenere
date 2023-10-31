@@ -10,6 +10,15 @@
 
 <br>
 
+## 🪄 Featues
+
+- Syntax highlights
+- Chat history
+- Save chats to files
+- Vim keybinding (partial support for now)
+
+<br>
+
 ## 💎 Supported LLMs
 
 Only **ChatGPT** is supported for the moment. But I'm planning to support more models in the future.
@@ -18,25 +27,40 @@ Only **ChatGPT** is supported for the moment. But I'm planning to support more m
 
 ## 🔌 Installation
 
-You can download the prebuilt binaries from the release page.
+### Binary releases
 
-For MacOs users, you can use [brew](https://brew.sh/) to install it as following:
+You can download the prebuilt binaries from the [release page](https://github.com/pythops/tenere/releases)
 
-```bash
-brew tap pythops/tenere
-brew install tenere
+### crates.io
+
+`tenere` can be installed from [crates.io](https://crates.io/crates/tenere)
+
+```shell
+cargo install tenere
 ```
 
-Otherwise, you can build from source. This requires [Rust](https://www.rust-lang.org/) compiler and
+### Build from source
+
+To build from the source, you need [Rust](https://www.rust-lang.org/) compiler and
 [Cargo package manager](https://doc.rust-lang.org/cargo/).
 
 Once Rust and Cargo are installed, run the following command to build:
 
-```bash
+```shell
 cargo build --release
 ```
 
 This will produce an executable file at `target/release/tenere` that you can copy to a directory in your `$PATH`.
+
+### Brew
+
+On macOS, you can use brew:
+
+```bash
+brew tap pythops/tenere
+brew install tenere
+
+```
 
 <br>
 
@@ -80,7 +104,7 @@ To use Tenere's chat functionality, you'll need to provide an API key for OpenAI
 
 1. Set an environment variable with your API key:
 
-```bash
+```shell
 export OPENAI_API_KEY="YOUTR KEY HERE"
 ```
 
@@ -117,6 +141,10 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 
 `dd`: to clear the prompt.
 
+`G`: Go to th end.
+
+`gg`: Go to the top.
+
 `n`: Start a new chat and save the previous one in history.
 
 `s`: Save the current chat or chat history (history popup should be visible first) to `tenere.archive` file in the current directory.
@@ -134,14 +162,6 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 `q`: to quit the app
 
 `?`: to show the help pop-up. You can dismiss it with `Esc`
-
-<br>
-
-## 🧭 Roadmap
-
-- [ ] Highlight the chat messages
-- [x] Show the scroll bar
-- [ ] Support more models
 
 <br>
 
