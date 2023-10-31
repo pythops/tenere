@@ -132,23 +132,23 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     // prompt block
     let prompt_paragraph = {
-        let mut scroll: u16 = 0;
-
         if let FocusedBlock::Prompt = app.focused_block {
-            let diff: isize = prompt_content_height as isize - prompt_block_max_height as isize;
+            let diff: isize = prompt_content_height as isize - prompt_block_max_height as isize - 1;
 
             // case where the prompt content height is shorter than the prompt block height
             if diff < 0 {
-                app.scroll = 0;
+                app.prompt.scroll = 0;
             } else {
-                app.scroll = diff as usize;
-                scroll = app.scroll as u16;
+                let diff = diff as u16;
+                if app.prompt.scroll > diff {
+                    app.prompt.scroll = diff
+                }
             }
         }
 
         Paragraph::new(app.prompt.message.as_str())
             .wrap(Wrap { trim: false })
-            .scroll((scroll, 0))
+            .scroll((app.prompt.scroll, 0))
             .style(Style::default())
             .block(
                 Block::default()
@@ -207,24 +207,20 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let chat_paragraph = {
         let diff: isize = chat_messages_height as isize - chat_block_height as isize;
 
-        let mut scroll: u16 = if diff > 0 { diff as u16 } else { 0 };
-
         if let FocusedBlock::Chat = app.focused_block {
             if diff > 0 {
                 let diff = diff as u16;
 
-                if app.scroll >= diff.into() {
-                    app.scroll = diff.into();
-                } else {
-                    scroll = app.scroll as u16;
+                if app.chat.scroll >= diff {
+                    app.chat.scroll = diff;
                 }
             }
         } else {
-            app.scroll = diff as usize;
+            app.chat.scroll = if diff > 0 { diff as u16 } else { 0 };
         }
 
         Paragraph::new(chat_text)
-            .scroll((scroll, 0))
+            .scroll((app.chat.scroll, 0))
             .wrap(Wrap { trim: false })
             .block(
                 Block::default()
@@ -302,24 +298,22 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         };
 
         let preview_scroll = {
-            let mut height: u16 = 0;
-            let mut scroll: u16 = 0;
-            for line in &preview_chat.lines {
-                height += 1;
-                height += line.width() as u16 / preview_block.width;
-            }
+            if !app.history.formatted_chat.is_empty() {
+                let preview_chat_height = app.history.formatted_chat[app.history.index].lines.len();
 
-            let height_diff = height as i32 - preview_block.height as i32;
+                let diff = preview_chat_height as i32 - preview_block.height as i32 + 3;
 
-            if height_diff > 0 {
                 if let FocusedBlock::Preview = app.focused_block {
-                    if app.scroll > height_diff as usize {
-                        app.scroll = height_diff as usize;
-                        scroll = app.scroll as u16;
+                    if diff >= 0 {
+                        let diff = diff as u16;
+
+                        if app.history.scroll >= diff {
+                            app.history.scroll = diff;
+                        }
                     }
                 }
             }
-            scroll
+            app.history.scroll
         };
 
         let preview = Paragraph::new(preview_chat)

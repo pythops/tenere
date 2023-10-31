@@ -33,23 +33,27 @@ pub struct History<'a> {
     pub index: usize,
     pub chat: Vec<Vec<String>>,
     pub formatted_chat: Vec<Text<'a>>,
+    pub scroll: u16,
 }
 
 #[derive(Debug, Default)]
 pub struct Chat<'a> {
     pub messages: Vec<String>,
     pub formatted_chat: Text<'a>,
+    pub scroll: u16,
 }
 
 #[derive(Debug)]
 pub struct Prompt {
     pub message: String,
+    pub scroll: u16,
 }
 
 impl Default for Prompt {
     fn default() -> Self {
         Self {
             message: String::from(">_ "),
+            scroll: 0,
         }
     }
 }
@@ -62,7 +66,6 @@ pub struct Answer<'a> {
 
 pub struct App<'a> {
     pub running: bool,
-    pub scroll: usize,
     pub prompt: Prompt,
     pub mode: Mode,
     pub chat: Chat<'a>,
@@ -81,7 +84,6 @@ impl<'a> App<'a> {
     pub fn new(config: Arc<Config>) -> Self {
         Self {
             running: true,
-            scroll: 0,
             prompt: Prompt::default(),
             mode: Mode::Normal,
             chat: Chat::default(),
