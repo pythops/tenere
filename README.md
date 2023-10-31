@@ -5,6 +5,7 @@
 </div>
 
 ## 📸 Demo
+
 ![Demo](https://github.com/pythops/tenere/assets/57548585/3fcc6df6-6564-43d2-a8a5-f77cbba07d93)
 
 <br>
@@ -170,12 +171,6 @@ When you launch [tenere](), it's in `Normal` mode by default. In this mode, you 
 - [crossterm](https://github.com/crossterm-rs/crossterm)
 - [reqwest](https://github.com/seanmonstar/reqwest)
 - [clap](https://github.com/clap-rs/clap)
-
-<br>
-
-## 🙏 Acknowledgments
-
-Big thanks to [@orhun](https://github.com/orhun) and [@sophacles](https://github.com/sophacles) for their precious help 🙏
 
 <br>
 
