@@ -46,7 +46,7 @@ pub fn help_rect(r: Rect) -> Rect {
         .constraints(
             [
                 Constraint::Percentage(22),
-                Constraint::Length(15),
+                Constraint::Length(18),
                 Constraint::Percentage(20),
             ]
             .as_ref(),
@@ -343,6 +343,8 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 `i`            : Switch to Insert mode
 `Esc`          : Switch to Normal mode
 `dd`           : Clear the prompt
+`G`            : Go to the end
+`gg`           : Go to the top
 `n`            : Start new chat and save the previous one to the history
 `s`            : Save the chat to `{}` file in the current directory
 `Tab`          : Switch the focus
