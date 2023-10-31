@@ -140,6 +140,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
                 app.prompt.scroll = 0;
             } else {
                 let diff = diff as u16;
+                app.prompt.length = diff;
                 if app.prompt.scroll > diff {
                     app.prompt.scroll = diff
                 }
@@ -210,6 +211,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         if let FocusedBlock::Chat = app.focused_block {
             if diff > 0 {
                 let diff = diff as u16;
+                app.chat.length = diff;
 
                 if app.chat.scroll >= diff {
                     app.chat.scroll = diff;
@@ -306,7 +308,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
                 if let FocusedBlock::Preview = app.focused_block {
                     if diff >= 0 {
                         let diff = diff as u16;
-
+                        app.history.length = diff;
                         if app.history.scroll >= diff {
                             app.history.scroll = diff;
                         }

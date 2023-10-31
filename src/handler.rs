@@ -131,13 +131,6 @@ pub fn handle_key_events(
                 _ => (),
             },
 
-            // Clear the prompt
-            KeyCode::Char('d') => {
-                if app.previous_key == KeyCode::Char('d') {
-                    app.prompt = Prompt::default();
-                }
-            }
-
             // New chat
             KeyCode::Char(c) if c == app.config.key_bindings.new_chat => {
                 app.prompt = Prompt::default();
@@ -255,6 +248,39 @@ pub fn handle_key_events(
             // Discard help & history popups
             KeyCode::Esc => {
                 app.focused_block = FocusedBlock::Prompt;
+            }
+
+            // Vim keybindings
+            // Clear the prompt: dd
+            KeyCode::Char('d') => {
+                if app.previous_key == KeyCode::Char('d') {
+                    app.prompt = Prompt::default();
+                }
+            }
+            // Go to the end: G
+            KeyCode::Char('G') => match app.focused_block {
+                FocusedBlock::Chat => app.chat.scroll = app.chat.length,
+                FocusedBlock::Prompt => app.prompt.scroll = app.prompt.length,
+                FocusedBlock::History => {
+                    if !app.history.formatted_chat.is_empty() {
+                        app.history.index = app.history.formatted_chat.len() - 1;
+                    }
+                }
+                FocusedBlock::Preview => app.history.scroll = app.history.length,
+                _ => (),
+            },
+
+            // Go to the top: gg
+            KeyCode::Char('g') => {
+                if app.previous_key == KeyCode::Char('g') {
+                    match app.focused_block {
+                        FocusedBlock::Chat => app.chat.scroll = 0,
+                        FocusedBlock::Prompt => app.prompt.scroll = 0,
+                        FocusedBlock::History => app.history.index = 0,
+                        FocusedBlock::Preview => app.history.scroll = 0,
+                        _ => (),
+                    }
+                }
             }
 
             _ => {}
