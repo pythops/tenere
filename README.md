@@ -5,8 +5,7 @@
 </div>
 
 ## 📸 Demo
-
-![demo](assets/demo.gif)
+![Demo](https://github.com/pythops/tenere/assets/57548585/3fcc6df6-6564-43d2-a8a5-f77cbba07d93)
 
 <br>
 
