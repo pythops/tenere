@@ -12,6 +12,7 @@ use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
 use tenere::llm::{LLMBackend, LLMModel};
+use tui::text::Text;
 
 use std::sync::Arc;
 
@@ -74,6 +75,8 @@ fn main() -> AppResult<()> {
                 app.llm_messages.push(conv);
 
                 app.chat.formatted_chat.extend(app.answer.formatted_answer);
+                app.chat.formatted_chat.extend(Text::raw("\n"));
+
                 app.chat.messages.push(format!("🤖: {}", app.answer.answer));
 
                 app.answer = Answer::default();
