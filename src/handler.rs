@@ -53,10 +53,10 @@ pub fn handle_key_events(
 
                 app.chat.messages.push(format!(" : {}\n", user_input));
 
-                app.chat
-                    .formatted_chat
-                    .lines
-                    .push(Line::raw(format!(" : {}\n", user_input)));
+                app.chat.formatted_chat.extend(
+                    app.formatter
+                        .format(format!(" : {}\n", user_input).as_str()),
+                );
 
                 let conv = HashMap::from([
                     ("role".into(), "user".into()),
