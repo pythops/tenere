@@ -18,6 +18,7 @@ use std::sync::mpsc::Sender;
 pub struct ChatGPT {
     client: reqwest::blocking::Client,
     openai_api_key: String,
+    model: String,
     url: String,
 }
 
@@ -41,6 +42,7 @@ You need to define one wether in the configuration file or as an environment var
         Self {
             client: reqwest::blocking::Client::new(),
             openai_api_key,
+            model: config.model,
             url: config.url,
         }
     }
@@ -73,7 +75,7 @@ impl LLM for ChatGPT {
         messages.extend(chat_messages);
 
         let body: Value = json!({
-            "model": "gpt-3.5-turbo",
+            "model": self.model,
             "messages": messages,
             "stream": true,
         });
