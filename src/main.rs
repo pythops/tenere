@@ -32,7 +32,7 @@ fn main() -> AppResult<()> {
 
     let formatter = Formatter::new(&formatter_config, &formatter_assets);
 
-    let mut app = App::new(config.clone());
+    let mut app = App::new(config.clone(), &formatter);
 
     let llm = Arc::new(LLMModel::init(LLMBackend::ChatGPT, config));
 
