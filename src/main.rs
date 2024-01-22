@@ -1,3 +1,5 @@
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
 use std::collections::HashMap;
 use std::{env, io};
 use tenere::app::{Answer, App, AppResult};
@@ -8,11 +10,9 @@ use tenere::formatter::Formatter;
 use tenere::handler::handle_key_events;
 use tenere::llm::LLMAnswer;
 use tenere::tui::Tui;
-use tui::backend::CrosstermBackend;
-use tui::Terminal;
 
+use ratatui::text::Text;
 use tenere::llm::{LLMBackend, LLMModel};
-use tui::text::Text;
 
 use std::sync::Arc;
 
@@ -23,6 +23,7 @@ fn main() -> AppResult<()> {
 
     let config = Arc::new(Config::load());
 
+    // TODO: move this to init app
     // Text formatter
     let formatter_config = bat::config::Config {
         colored_output: true,

@@ -4,9 +4,9 @@ use crate::ui;
 use crossterm::cursor::EnableBlinking;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
+use ratatui::backend::Backend;
+use ratatui::Terminal;
 use std::io;
-use tui::backend::Backend;
-use tui::Terminal;
 
 #[derive(Debug)]
 pub struct Tui<B: Backend> {

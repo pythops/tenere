@@ -21,3 +21,5 @@ pub mod llm;
 pub mod spinner;
 
 pub mod formatter;
+
+pub mod prompt;
