@@ -251,41 +251,11 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         frame.render_widget(preview, preview_block);
     }
 
+    // Show Help
     if let FocusedBlock::Help = app.focused_block {
-        let help = format!(
-            "
-`i`            : Switch to Insert mode
-`Esc`          : Switch to Normal mode
-`dd`           : Clear the prompt
-`G`            : Go to the end
-`gg`           : Go to the top
-`n`            : Start new chat and save the previous one to the history
-`s`            : Save the chat to `{}` file in the current directory
-`Tab`          : Switch the focus
-`h`            : Show history
-`t`            : Stop the stream response
-`j` or `Down`  : Scroll down
-`k` or `Up`    : Scroll up
-`?`            : show help
-`q`            : Quit
-",
-            app.config.archive_file_name
-        );
-
-        let block = Paragraph::new(help.as_str())
-            .wrap(Wrap { trim: false })
-            .block(
-                Block::default()
-                    .title(" Help ")
-                    .title_alignment(Alignment::Center)
-                    .borders(Borders::ALL)
-                    .style(Style::default())
-                    .border_type(BorderType::Rounded)
-                    .border_style(Style::default().fg(Color::Yellow)),
-            );
+        app.prompt.update(&FocusedBlock::Help);
         let area = help_rect(frame_size);
-        frame.render_widget(Clear, area);
-        frame.render_widget(block, area);
+        app.help.render(frame, area);
     }
 
     for (i, n) in app.notifications.iter().enumerate() {

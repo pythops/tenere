@@ -1,3 +1,4 @@
+use crate::help::Help;
 use crate::prompt::Prompt;
 use std;
 use std::collections::HashMap;
@@ -58,6 +59,7 @@ pub struct App<'a> {
     pub spinner: Spinner,
     pub terminate_response_signal: Arc<AtomicBool>,
     pub clipboard: Option<Clipboard>,
+    pub help: Help,
     pub config: Arc<Config>,
     pub formatter: &'a Formatter<'a>,
 }
@@ -76,6 +78,7 @@ impl<'a> App<'a> {
             spinner: Spinner::default(),
             terminate_response_signal: Arc::new(AtomicBool::new(false)),
             clipboard: Clipboard::new().ok(),
+            help: Help::new(),
             config,
             formatter,
         }

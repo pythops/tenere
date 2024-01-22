@@ -56,6 +56,9 @@ pub fn handle_key_events(
             FocusedBlock::Preview => {
                 app.history.scroll = app.history.scroll.saturating_add(1);
             }
+            FocusedBlock::Help => {
+                app.help.scroll_down();
+            }
             _ => (),
         },
 
@@ -70,6 +73,11 @@ pub fn handle_key_events(
             FocusedBlock::Chat => {
                 app.chat.scroll = app.chat.scroll.saturating_sub(1);
             }
+
+            FocusedBlock::Help => {
+                app.help.scroll_up();
+            }
+
             _ => (),
         },
 
