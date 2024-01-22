@@ -6,6 +6,7 @@ use std::sync::atomic::AtomicBool;
 use crate::notification::Notification;
 use crate::spinner::Spinner;
 use crate::{config::Config, formatter::Formatter};
+use arboard::Clipboard;
 use ratatui::text::{Line, Text};
 
 use std::sync::Arc;
@@ -56,6 +57,7 @@ pub struct App<'a> {
     pub notifications: Vec<Notification>,
     pub spinner: Spinner,
     pub terminate_response_signal: Arc<AtomicBool>,
+    pub clipboard: Option<Clipboard>,
     pub config: Arc<Config>,
     pub formatter: &'a Formatter<'a>,
 }
@@ -73,6 +75,7 @@ impl<'a> App<'a> {
             notifications: Vec::new(),
             spinner: Spinner::default(),
             terminate_response_signal: Arc::new(AtomicBool::new(false)),
+            clipboard: Clipboard::new().ok(),
             config,
             formatter,
         }
