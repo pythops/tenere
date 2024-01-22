@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.10] TBA
+
+### Added
+
+- More vim like key bindings for the prompt
+- Add Visual mode for the prompt
+- Copy and paste from/to the clipboard in the prompt
+
+### Fixed
+
+- Use model from the config file if defined
+
 ## [0.9] 01/11/2023
 
 ### Features
