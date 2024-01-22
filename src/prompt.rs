@@ -91,7 +91,7 @@ impl Prompt<'_> {
             });
     }
 
-    pub fn key_binding(&mut self, key_event: KeyEvent, clipboard: Option<&mut Clipboard>) {
+    pub fn handler(&mut self, key_event: KeyEvent, clipboard: Option<&mut Clipboard>) {
         match self.mode {
             Mode::Insert => match key_event.code {
                 KeyCode::Enter => {
