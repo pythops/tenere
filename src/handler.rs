@@ -271,7 +271,7 @@ pub fn handle_key_events(
             }
         }
 
-        app.prompt.key_binding(key_event);
+        app.prompt.key_binding(key_event, app.clipboard.as_mut());
     }
 
     Ok(())

@@ -1,3 +1,4 @@
+use arboard::Clipboard;
 use ratatui::{
     layout::Rect,
     style::{Color, Style},
@@ -18,7 +19,6 @@ pub enum Mode {
     Visual,
 }
 
-#[derive(Debug)]
 pub struct Prompt<'a> {
     pub mode: Mode,
     pub previous_key: KeyCode,
@@ -91,7 +91,7 @@ impl Prompt<'_> {
             });
     }
 
-    pub fn key_binding(&mut self, key_event: KeyEvent) {
+    pub fn key_binding(&mut self, key_event: KeyEvent, clipboard: Option<&mut Clipboard>) {
         match self.mode {
             Mode::Insert => match key_event.code {
                 KeyCode::Enter => {
@@ -250,10 +250,20 @@ impl Prompt<'_> {
 
                 KeyCode::Char('y') => {
                     self.editor.copy();
+                    if let Some(clipboard) = clipboard {
+                        let text = self.editor.yank_text();
+                        let _ = clipboard.set_text(text);
+                    }
                 }
 
                 KeyCode::Char('p') => {
-                    self.editor.paste();
+                    if !self.editor.paste() {
+                        if let Some(clipboard) = clipboard {
+                            if let Ok(text) = clipboard.get_text() {
+                                self.editor.insert_str(text);
+                            }
+                        }
+                    }
                 }
 
                 _ => {}
