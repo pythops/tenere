@@ -1,6 +1,6 @@
 use ratatui::{
     layout::{Alignment, Constraint, Rect},
-    style::{Color, Style},
+    style::Style,
     widgets::{Block, BorderType, Borders, Clear, Padding, Row, Table, TableState},
     Frame,
 };
