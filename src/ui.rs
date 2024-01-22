@@ -1,16 +1,14 @@
 use crate::notification::NotificationLevel;
 use std;
 
-use crate::app::{App, FocusedBlock, Mode};
-use tui::{
-    layout::{Constraint, Direction, Layout, Rect},
+use crate::app::{App, FocusedBlock};
+use ratatui::{
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
-
-use unicode_width::UnicodeWidthStr;
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -93,101 +91,18 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 }
 
 pub fn render(app: &mut App, frame: &mut Frame) {
-    // Layout
     let frame_size = frame.size();
 
-    // prompt height can grow till 40% of the frame height
-    let prompt_block_max_height = (0.4 * frame_size.height as f32) as u16;
-
-    let prompt_content_height = {
-        let mut height: u16 = 1;
-        for line in app.prompt.message.lines() {
-            height += 1;
-            height += line.width() as u16 / frame_size.width;
-        }
-        height
-    };
-
-    let prompt_block_height = std::cmp::min(prompt_content_height, prompt_block_max_height);
-
-    // chat height is the frame height minus the prompt height
-    let chat_block_height = std::cmp::max(
-        frame_size.height - prompt_block_height - 3,
-        frame_size.height - prompt_block_max_height - 3,
-    );
+    let prompt_block_height = app.prompt.height(&frame_size) + 3;
+    let chat_block_height = frame_size.height - prompt_block_height;
 
     let (chat_block, prompt_block) = {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(
-                [
-                    Constraint::Length(chat_block_height),
-                    Constraint::Length(prompt_block_height),
-                ]
-                .as_ref(),
-            )
+            .constraints([Constraint::Min(1), Constraint::Length(prompt_block_height)].as_ref())
             .split(frame.size());
         (chunks[0], chunks[1])
     };
-
-    // prompt block
-    let prompt_paragraph = {
-        if let FocusedBlock::Prompt = app.focused_block {
-            let diff: isize = prompt_content_height as isize - prompt_block_max_height as isize - 1;
-
-            // case where the prompt content height is shorter than the prompt block height
-            if diff < 0 {
-                app.prompt.scroll = 0;
-            } else {
-                let diff = diff as u16;
-                app.prompt.length = diff;
-                if app.prompt.scroll > diff {
-                    app.prompt.scroll = diff
-                }
-            }
-        }
-
-        Paragraph::new(app.prompt.message.as_str())
-            .wrap(Wrap { trim: false })
-            .scroll((app.prompt.scroll, 0))
-            .style(Style::default())
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .style(Style::default())
-                    .border_type(match app.focused_block {
-                        FocusedBlock::Prompt => BorderType::Thick,
-                        _ => BorderType::Rounded,
-                    })
-                    .border_style(match app.focused_block {
-                        FocusedBlock::Prompt => match app.mode {
-                            Mode::Insert => Style::default().fg(Color::Green),
-                            Mode::Normal => Style::default().fg(Color::Yellow),
-                        },
-                        _ => Style::default(),
-                    }),
-            )
-    };
-
-    match app.mode {
-        Mode::Normal => {}
-
-        Mode::Insert => frame.set_cursor(
-            prompt_block.x
-                + {
-                    let last_line = app.prompt.message.lines().last().unwrap_or("");
-                    let mut width = last_line.len() as u16;
-                    if last_line.len() as u16 > frame_size.width {
-                        let last_word = last_line.rsplit(' ').last().unwrap_or("");
-                        width =
-                            last_line.width() as u16 % frame_size.width + last_word.len() as u16;
-                    }
-                    width
-                }
-                + 1,
-            prompt_block.y + std::cmp::min(prompt_content_height, prompt_block_max_height) - 1,
-        ),
-    }
 
     // Chat block
     let chat_text = {
@@ -233,20 +148,17 @@ pub fn render(app: &mut App, frame: &mut Frame) {
                         _ => BorderType::Rounded,
                     })
                     .border_style(match app.focused_block {
-                        FocusedBlock::Chat => match app.mode {
-                            Mode::Insert => Style::default().fg(Color::Green),
-                            Mode::Normal => Style::default().fg(Color::Yellow),
-                        },
+                        FocusedBlock::Chat => Style::default(),
                         _ => Style::default(),
                     }),
             )
     };
 
-    // Draw
+    // Render
 
     frame.render_widget(chat_paragraph, chat_block);
 
-    frame.render_widget(prompt_paragraph, prompt_block);
+    app.prompt.render(frame, prompt_block);
 
     if let FocusedBlock::History | FocusedBlock::Preview = app.focused_block {
         let area = centered_rect(80, 80, frame_size);
@@ -284,7 +196,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             Block::default()
                 .borders(Borders::ALL)
                 .title(" History ")
-                .title_alignment(tui::layout::Alignment::Center)
+                .title_alignment(Alignment::Center)
                 .style(Style::default())
                 .border_type(BorderType::Rounded)
                 .border_style(match app.focused_block {
@@ -324,7 +236,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             .block(
                 Block::default()
                     .title(" Preview ")
-                    .title_alignment(tui::layout::Alignment::Center)
+                    .title_alignment(Alignment::Center)
                     .borders(Borders::ALL)
                     .style(Style::default())
                     .border_type(BorderType::Rounded)
@@ -365,7 +277,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             .block(
                 Block::default()
                     .title(" Help ")
-                    .title_alignment(tui::layout::Alignment::Center)
+                    .title_alignment(Alignment::Center)
                     .borders(Borders::ALL)
                     .style(Style::default())
                     .border_type(BorderType::Rounded)
@@ -389,7 +301,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             Text::from("")
         })
         .wrap(Wrap { trim: false })
-        .alignment(tui::layout::Alignment::Center)
+        .alignment(Alignment::Center)
         .block(
             Block::default()
                 .borders(Borders::ALL)
