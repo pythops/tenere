@@ -149,35 +149,63 @@ impl Prompt<'_> {
                     self.editor.move_cursor(CursorMove::Forward);
                 }
 
-                KeyCode::Char('w') => {
-                    if self.previous_key == KeyCode::Char('d') {
+                KeyCode::Char('w') => match self.previous_key {
+                    KeyCode::Char('d') => {
                         self.editor.delete_next_word();
                     }
-                    self.editor.move_cursor(CursorMove::WordForward);
-                }
+                    KeyCode::Char('c') => {
+                        self.editor.delete_next_word();
+                        self.mode = Mode::Insert;
+                        self.update(&FocusedBlock::Prompt);
+                    }
 
-                KeyCode::Char('b') => {
-                    if self.previous_key == KeyCode::Char('d') {
+                    _ => self.editor.move_cursor(CursorMove::WordForward),
+                },
+
+                KeyCode::Char('b') => match self.previous_key {
+                    KeyCode::Char('d') => {
                         self.editor.delete_word();
                     }
-                    self.editor.move_cursor(CursorMove::WordBack);
-                }
+                    KeyCode::Char('c') => {
+                        self.editor.delete_word();
+                        self.mode = Mode::Insert;
+                        self.update(&FocusedBlock::Prompt);
+                    }
 
-                KeyCode::Char('$') => {
-                    if self.previous_key == KeyCode::Char('d') {
+                    _ => self.editor.move_cursor(CursorMove::WordBack),
+                },
+
+                KeyCode::Char('$') => match self.previous_key {
+                    KeyCode::Char('d') => {
                         self.editor.delete_line_by_end();
                     }
-                    self.editor.move_cursor(CursorMove::End);
-                }
+                    KeyCode::Char('c') => {
+                        self.editor.delete_line_by_end();
+                        self.mode = Mode::Insert;
+                        self.update(&FocusedBlock::Prompt);
+                    }
+                    _ => self.editor.move_cursor(CursorMove::End),
+                },
 
-                KeyCode::Char('0') => {
-                    if self.previous_key == KeyCode::Char('d') {
+                KeyCode::Char('0') => match self.previous_key {
+                    KeyCode::Char('d') => {
                         self.editor.delete_line_by_head();
                     }
-                    self.editor.move_cursor(CursorMove::Head);
-                }
+                    KeyCode::Char('c') => {
+                        self.editor.delete_line_by_head();
+                        self.mode = Mode::Insert;
+                        self.update(&FocusedBlock::Prompt);
+                    }
+                    _ => self.editor.move_cursor(CursorMove::Head),
+                },
 
-                KeyCode::Char('^') => self.editor.move_cursor(CursorMove::Head),
+                KeyCode::Char('G') => self.editor.move_cursor(CursorMove::Bottom),
+
+                KeyCode::Char('g') => {
+                    if self.previous_key == KeyCode::Char('g') {
+                        self.editor.move_cursor(CursorMove::Jump(0, 0))
+                    }
+                }
 
                 KeyCode::Char('D') => {
                     self.editor.move_cursor(CursorMove::Head);
@@ -189,7 +217,15 @@ impl Prompt<'_> {
                     if self.previous_key == KeyCode::Char('d') {
                         self.editor.move_cursor(CursorMove::Head);
                         self.editor.delete_line_by_end();
-                        self.editor.delete_line_by_head();
+                    }
+                }
+
+                KeyCode::Char('c') => {
+                    if self.previous_key == KeyCode::Char('c') {
+                        self.editor.move_cursor(CursorMove::Head);
+                        self.editor.delete_line_by_end();
+                        self.mode = Mode::Insert;
+                        self.update(&FocusedBlock::Prompt);
                     }
                 }
 
@@ -197,10 +233,6 @@ impl Prompt<'_> {
                     self.editor.delete_line_by_end();
                     self.mode = Mode::Insert;
                     self.update(&FocusedBlock::Prompt);
-                }
-
-                KeyCode::Char('u') => {
-                    self.editor.undo();
                 }
 
                 KeyCode::Char('x') => {
@@ -240,14 +272,6 @@ impl Prompt<'_> {
                     self.update(&FocusedBlock::Prompt);
                 }
 
-                KeyCode::Char('G') => self.editor.move_cursor(CursorMove::Bottom),
-
-                KeyCode::Char('g') => {
-                    if self.previous_key == KeyCode::Char('g') {
-                        self.editor.move_cursor(CursorMove::Jump(0, 0))
-                    }
-                }
-
                 KeyCode::Char('y') => {
                     self.editor.copy();
                     if let Some(clipboard) = clipboard {
@@ -264,6 +288,10 @@ impl Prompt<'_> {
                             }
                         }
                     }
+                }
+
+                KeyCode::Char('u') => {
+                    self.editor.undo();
                 }
 
                 _ => {}
