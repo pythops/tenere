@@ -42,11 +42,7 @@ pub fn handle_key_events(
         // scroll down
         KeyCode::Char('j') | KeyCode::Down => match app.focused_block {
             FocusedBlock::History => {
-                if !app.history.formatted_chat.is_empty()
-                    && app.history.index < app.history.chat.len() - 1
-                {
-                    app.history.index += 1;
-                }
+                app.history.scroll_down();
             }
 
             FocusedBlock::Chat => {
@@ -54,7 +50,7 @@ pub fn handle_key_events(
             }
 
             FocusedBlock::Preview => {
-                app.history.scroll = app.history.scroll.saturating_add(1);
+                app.history.preview.scroll = app.history.preview.scroll.saturating_add(1);
             }
             FocusedBlock::Help => {
                 app.help.scroll_down();
@@ -64,10 +60,10 @@ pub fn handle_key_events(
 
         // scroll up
         KeyCode::Char('k') | KeyCode::Up => match app.focused_block {
-            FocusedBlock::History => app.history.index = app.history.index.saturating_sub(1),
+            FocusedBlock::History => app.history.scroll_up(),
 
             FocusedBlock::Preview => {
-                app.history.scroll = app.history.scroll.saturating_sub(1);
+                app.history.preview.scroll = app.history.preview.scroll.saturating_sub(1);
             }
 
             FocusedBlock::Chat => {
@@ -81,6 +77,16 @@ pub fn handle_key_events(
             _ => (),
         },
 
+        // `G`:  Mo to the bottom
+        KeyCode::Char('G') => match app.focused_block {
+            FocusedBlock::Chat => app.chat.scroll = app.chat.length,
+            FocusedBlock::History => app.history.move_to_bottom(),
+            _ => (),
+        },
+
+        // `gg`: Move to the top
+        //TODO:
+
         // New chat
         KeyCode::Char(c)
             if c == app.config.key_bindings.new_chat
@@ -89,9 +95,12 @@ pub fn handle_key_events(
             app.prompt.clear();
 
             app.history
-                .formatted_chat
+                .preview
+                .text
                 .push(app.chat.formatted_chat.clone());
-            app.history.chat.push(app.chat.messages.clone());
+
+            app.history.text.push(app.chat.messages.clone());
+
             app.chat = Chat::default();
             app.llm_messages = Vec::new();
 
@@ -105,30 +114,8 @@ pub fn handle_key_events(
         {
             match app.focused_block {
                 FocusedBlock::History | FocusedBlock::Preview => {
-                    if !app.history.chat.is_empty() {
-                        match std::fs::write(
-                            &app.config.archive_file_name,
-                            app.history.chat[app.history.index].join(""),
-                        ) {
-                            Ok(_) => {
-                                let notif = Notification::new(
-                                    format!(
-                                        "Chat saved to `{}` file",
-                                        app.config.archive_file_name
-                                    ),
-                                    NotificationLevel::Info,
-                                );
-
-                                sender.send(Event::Notification(notif)).unwrap();
-                            }
-                            Err(e) => {
-                                let notif =
-                                    Notification::new(e.to_string(), NotificationLevel::Error);
-
-                                sender.send(Event::Notification(notif)).unwrap();
-                            }
-                        }
-                    }
+                    app.history
+                        .save(app.config.archive_file_name.as_str(), sender.clone());
                 }
                 FocusedBlock::Chat | FocusedBlock::Prompt => {
                     match std::fs::write(
@@ -170,11 +157,11 @@ pub fn handle_key_events(
             }
             FocusedBlock::History => {
                 app.focused_block = FocusedBlock::Preview;
-                app.history.scroll = 0;
+                app.history.preview.scroll = 0;
             }
             FocusedBlock::Preview => {
                 app.focused_block = FocusedBlock::History;
-                app.history.scroll = 0;
+                app.history.preview.scroll = 0;
             }
             _ => (),
         },
@@ -201,18 +188,6 @@ pub fn handle_key_events(
                 app.focused_block = FocusedBlock::Prompt
             }
             _ => {}
-        },
-
-        // Go to the end: G
-        KeyCode::Char('G') => match app.focused_block {
-            FocusedBlock::Chat => app.chat.scroll = app.chat.length,
-            FocusedBlock::History => {
-                if !app.history.formatted_chat.is_empty() {
-                    app.history.index = app.history.formatted_chat.len() - 1;
-                }
-            }
-            FocusedBlock::Preview => app.history.scroll = app.history.length,
-            _ => (),
         },
 
         _ => {}

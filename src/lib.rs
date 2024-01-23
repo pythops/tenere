@@ -25,3 +25,5 @@ pub mod formatter;
 pub mod prompt;
 
 pub mod help;
+
+pub mod history;
