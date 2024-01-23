@@ -11,7 +11,8 @@ repository = "https://github.com/pythops/tenere"
 
 [dependencies]
 crossterm = "0.26"
-tui = { package = "ratatui", version = "0.25", features = ["all-widgets"] }
+ratatui = { version = "0.25", features = ["all-widgets"] }
+tui-textarea = { version = "0.4" }
 unicode-width = "0.1"
 reqwest = { version = "0.11", default-features = false, features = [
   "blocking",
@@ -28,3 +29,4 @@ dirs = "5"
 regex = "1"
 bat = "0.24"
 colored = "2"
+arboard = "3"

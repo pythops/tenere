@@ -15,7 +15,8 @@
 - Syntax highlights
 - Chat history
 - Save chats to files
-- Vim keybinding (partial support for now)
+- Vim keybinding (most common ops)
+- Copy text from/to clipboard
 
 <br>
 
@@ -25,13 +26,13 @@ Only **ChatGPT** is supported for the moment. But I'm planning to support more m
 
 <br>
 
-## 🔌 Installation
+## 🚀 Installation
 
-### Binary releases
+### 📥 Binary releases
 
-You can download the prebuilt binaries from the [release page](https://github.com/pythops/tenere/releases)
+You can download the pre-built binaries from the [release page](https://github.com/pythops/tenere/releases)
 
-### crates.io
+### 📦 crates.io
 
 `tenere` can be installed from [crates.io](https://crates.io/crates/tenere)
 
@@ -39,7 +40,7 @@ You can download the prebuilt binaries from the [release page](https://github.co
 cargo install tenere
 ```
 
-### Build from source
+### ⚒️ Build from source
 
 To build from the source, you need [Rust](https://www.rust-lang.org/) compiler and
 [Cargo package manager](https://doc.rust-lang.org/cargo/).
@@ -52,14 +53,13 @@ cargo build --release
 
 This will produce an executable file at `target/release/tenere` that you can copy to a directory in your `$PATH`.
 
-### Brew
+### 🍺Brew
 
 On macOS, you can use brew:
 
 ```bash
 brew tap pythops/tenere
 brew install tenere
-
 ```
 
 <br>
@@ -81,7 +81,6 @@ Here are the available general settings:
 ```toml
 archive_file_name = "tenere.archive"
 model = "chatgpt"
-
 ```
 
 ### Key bindings
@@ -97,6 +96,8 @@ show_history = 'h'
 new_chat = 'n'
 save_chat = 's'
 ```
+
+⚠️ To avoid overlapping with vim key bindings, you need to use `ctrl` + `key` except for help `?`.
 
 ## Chatgpt
 
@@ -117,60 +118,125 @@ model = "gpt-3.5-turbo"
 url = "https://api.openai.com/v1/chat/completions"
 ```
 
-The default model is set to `gpt-3.5-turbo`. check out the [OpenAI documentation](https://platform.openai.com/docs/models/gpt-3-5) for more info.
+The default model is set to `gpt-3.5-turbo`. Check out the [OpenAI documentation](https://platform.openai.com/docs/models/gpt-3-5) for more info.
 
-## 🚀 Usage
+<br>
 
-There are two modes like vim: `Normal` and `Insert`.
+## ⌨️ Key bindings
+
+### Global
+
+These are the default key bindings regardless of the focused block.
+
+`ctrl + n`: Start a new chat and save the previous one in history.
+
+`ctrl + s`: Save the current chat or chat history (history pop-up should be visible first) to `tenere.archive` file in the current directory.
+
+`Tab`: Switch the focus.
+
+`j` or `Down arrow key`: Scroll down
+
+`k` or `Up arrow key`: Scroll up
+
+`ctrl + h` : Show chat history. Press `Esc` to dismiss it.
+
+`ctrl + t` : Stop the stream response
+
+`q` or `ctrl + c`: Quit the app
+
+`?`: Show the help pop-up. Press `Esc` to dismiss it
+
+### Prompt
+
+There are 3 modes like vim: `Normal`, `Visual` and `Insert`.
 
 #### Insert mode
 
-To enter `Insert` mode, You press `i`. Once you're in, you can use:
-
 `Esc`: to switch back to Normal mode.
 
-`Enter`: to create a new line
+`Enter`: to create a new line.
 
-`Backspace`: to remove the previous character
+`Backspace`: to remove the previous character.
 
 #### Normal mode
 
-When you launch [tenere](), it's in `Normal` mode by default. In this mode, you can use:
-
 `Enter`: to submit the prompt
 
-`dd`: to clear the prompt.
+<br>
+
+`h or Left`: Move the cursor backward by one char.
+
+`j or Down`: Move the cursor down.
+
+`k or Up`: Move the cursor up.
+
+`l or Right`: Move the cursor forward by one char.
+
+`w`: Move the cursor right by one word.
+
+`b`: Move the cursor backward by one word.
+
+`0`: Move the cursor to the start of the line.
+
+`$`: Move the cursor to the end of the line.
 
 `G`: Go to th end.
 
 `gg`: Go to the top.
 
-`n`: Start a new chat and save the previous one in history.
+<br>
 
-`s`: Save the current chat or chat history (history popup should be visible first) to `tenere.archive` file in the current directory.
+`a`: Insert after the cursor.
 
-`Tab`: to switch the focus.
+`A`: Insert at the end of the line.
 
-`j` or `Down arrow key`: to scroll down
+`i`: Insert before the cursor.
 
-`k` or `Up arrow key`: to scroll up
+`I`: Insert at the beginning of the line.
 
-`h` : Show chat history
+`o`: Append a new line below the current line.
 
-`t` : Stop the stream response
-
-`q`: to quit the app
-
-`?`: to show the help pop-up. You can dismiss it with `Esc`
+`O`: Append a new line above the current line.
 
 <br>
 
-## 🛠️ Built with
+`x`: Delete one char under to the cursor.
 
-- [ratatui](https://github.com/tui-rs-revival/ratatui)
-- [crossterm](https://github.com/crossterm-rs/crossterm)
-- [reqwest](https://github.com/seanmonstar/reqwest)
-- [clap](https://github.com/clap-rs/clap)
+`dd`: Cut the current line
+
+`D`: Delete the current line and
+
+`dw`: Delete the word next to the cursor.
+
+`db`: Delete the word on the left of the cursor.
+
+`d0`: Delete from the cursor to the beginning of the line.
+
+`d$`: Delete from the cursor to the end of the line.
+
+<br>
+
+`C`: Change to the end of the line.
+
+`cc`: Change the current line.
+
+`c0`: Change from the cursor to the beginning of the line.
+
+`c$`: Change from the cursor to the end of the line.
+
+`cw`: Change the next word.
+
+`cb`: Change the word on the left of the cursor.
+
+<br>
+
+`u`: Undo
+
+`p`: Paste
+
+#### Visual mode
+
+`y`: Yank the selected text
 
 <br>
 
