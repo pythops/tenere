@@ -1,4 +1,3 @@
-use crate::notification::NotificationLevel;
 use std;
 
 use crate::app::{App, FocusedBlock};
@@ -258,29 +257,9 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         app.help.render(frame, area);
     }
 
-    for (i, n) in app.notifications.iter().enumerate() {
-        let border_color = match n.level {
-            NotificationLevel::Info => Color::Green,
-            NotificationLevel::Warning => Color::Yellow,
-            NotificationLevel::Error => Color::Red,
-        };
-
-        let block = Paragraph::new(if !n.message.is_empty() {
-            Text::from(n.message.as_str())
-        } else {
-            Text::from("")
-        })
-        .wrap(Wrap { trim: false })
-        .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .border_type(BorderType::Rounded)
-                .border_style(Style::default().fg(border_color)),
-        );
+    // Show notifications
+    for (i, notif) in app.notifications.iter_mut().enumerate() {
         let area = notification_rect(i as u16, frame_size);
-        frame.render_widget(Clear, area);
-        frame.render_widget(block, area);
+        notif.render(frame, area);
     }
 }
