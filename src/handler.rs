@@ -113,7 +113,7 @@ pub fn handle_key_events(
                             Ok(_) => {
                                 let notif = Notification::new(
                                     format!(
-                                        "**Info**\nChat saved to `{}` file",
+                                        "Chat saved to `{}` file",
                                         app.config.archive_file_name
                                     ),
                                     NotificationLevel::Info,
@@ -122,10 +122,8 @@ pub fn handle_key_events(
                                 sender.send(Event::Notification(notif)).unwrap();
                             }
                             Err(e) => {
-                                let notif = Notification::new(
-                                    format!("**Error**\n{}", e),
-                                    NotificationLevel::Error,
-                                );
+                                let notif =
+                                    Notification::new(e.to_string(), NotificationLevel::Error);
 
                                 sender.send(Event::Notification(notif)).unwrap();
                             }
@@ -139,20 +137,14 @@ pub fn handle_key_events(
                     ) {
                         Ok(_) => {
                             let notif = Notification::new(
-                                format!(
-                                    "**Info**\nChat saved to `{}` file",
-                                    app.config.archive_file_name
-                                ),
+                                format!("Chat saved to `{}` file", app.config.archive_file_name),
                                 NotificationLevel::Info,
                             );
 
                             sender.send(Event::Notification(notif)).unwrap();
                         }
                         Err(e) => {
-                            let notif = Notification::new(
-                                format!("**Error**\n{}", e),
-                                NotificationLevel::Error,
-                            );
+                            let notif = Notification::new(e.to_string(), NotificationLevel::Error);
 
                             sender.send(Event::Notification(notif)).unwrap();
                         }
