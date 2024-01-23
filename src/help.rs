@@ -20,11 +20,8 @@ impl Default for Help {
             block_height: 0,
             state,
             keys: &[
-                ("Esc", "Switch to Normal mode"),
-                ("i", "Switch to Insert mode"),
-                ("v", "Switch to Visual mode"),
-                ("G", "Go to the end"),
-                ("gg", "Go to the top"),
+                ("Esc", "Switch to Normal mode / Dismiss pop-up"),
+                ("Tab", "Switch the focus"),
                 (
                     "ctrl + n",
                     "Start new chat and save the previous one to the history",
@@ -33,11 +30,12 @@ impl Default for Help {
                     "ctrl + s",
                     "Save the chat to  file in the current directory",
                 ),
-                ("Tab", "Switch the focus"),
                 ("ctrl + h", "Show history"),
                 ("ctrl + t", "Stop the stream response"),
                 ("j or Down", "Scroll down"),
                 ("k or Up", "Scroll up"),
+                ("G", "Go to the end"),
+                ("gg", "Go to the top"),
                 ("?", "show help"),
             ],
         }
@@ -52,7 +50,7 @@ impl Help {
     pub fn scroll_down(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
-                if i >= self.keys.len().saturating_sub(self.block_height - 4) {
+                if i >= self.keys.len().saturating_sub(self.block_height - 6) {
                     i
                 } else {
                     i + 1
@@ -89,7 +87,7 @@ impl Help {
 
         let table = Table::new(rows, widths).block(
             Block::default()
-                .padding(Padding::uniform(1))
+                .padding(Padding::uniform(2))
                 .title(" Help ")
                 .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
