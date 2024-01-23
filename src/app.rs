@@ -1,4 +1,5 @@
 use crate::help::Help;
+use crate::history::History;
 use crate::prompt::Prompt;
 use std;
 use std::collections::HashMap;
@@ -14,23 +15,13 @@ use std::sync::Arc;
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FocusedBlock {
     Prompt,
     Chat,
     History,
     Preview,
     Help,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct History<'a> {
-    pub show: bool,
-    pub index: usize,
-    pub chat: Vec<Vec<String>>,
-    pub formatted_chat: Vec<Text<'a>>,
-    pub scroll: u16,
-    pub length: u16,
 }
 
 #[derive(Debug, Default)]
@@ -73,7 +64,7 @@ impl<'a> App<'a> {
             focused_block: FocusedBlock::Prompt,
             llm_messages: Vec::new(),
             answer: Answer::default(),
-            history: History::default(),
+            history: History::new(),
             notifications: Vec::new(),
             spinner: Spinner::default(),
             terminate_response_signal: Arc::new(AtomicBool::new(false)),

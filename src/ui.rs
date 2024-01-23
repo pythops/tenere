@@ -2,10 +2,9 @@ use std;
 
 use crate::app::{App, FocusedBlock};
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    text::{Line, Text},
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap},
+    layout::{Constraint, Direction, Layout, Rect},
+    style::Style,
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
 
@@ -155,109 +154,24 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     // Render
 
+    // Prompt
     frame.render_widget(chat_paragraph, chat_block);
-
     app.prompt.render(frame, prompt_block);
 
+    // History
     if let FocusedBlock::History | FocusedBlock::Preview = app.focused_block {
         let area = centered_rect(80, 80, frame_size);
-
-        let (history_block, preview_block) = {
-            let chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-                .split(area);
-            (chunks[0], chunks[1])
-        };
-
-        let history = List::new({
-            if app.history.chat.is_empty() {
-                vec![ListItem::new(Line::raw("History is empty"))]
-            } else {
-                app.history
-                    .formatted_chat
-                    .iter()
-                    .enumerate()
-                    .map(|(i, chat)| {
-                        let msg = chat.lines[0].clone();
-                        ListItem::new(msg).style({
-                            if app.history.index == i {
-                                Style::default().bg(Color::Rgb(50, 54, 26))
-                            } else {
-                                Style::default()
-                            }
-                        })
-                    })
-                    .collect::<Vec<ListItem>>()
-            }
-        })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title(" History ")
-                .title_alignment(Alignment::Center)
-                .style(Style::default())
-                .border_type(BorderType::Rounded)
-                .border_style(match app.focused_block {
-                    FocusedBlock::History => Style::default().fg(Color::Yellow),
-                    _ => Style::default(),
-                }),
-        );
-
-        let preview_chat: Text = if !app.history.chat.is_empty() {
-            app.history.formatted_chat[app.history.index].clone()
-        } else {
-            Text::from("")
-        };
-
-        let preview_scroll = {
-            if !app.history.formatted_chat.is_empty() {
-                let preview_chat_height = app.history.formatted_chat[app.history.index].lines.len();
-
-                let diff = preview_chat_height as i32 - preview_block.height as i32 + 3;
-
-                if let FocusedBlock::Preview = app.focused_block {
-                    if diff >= 0 {
-                        let diff = diff as u16;
-                        app.history.length = diff;
-                        if app.history.scroll >= diff {
-                            app.history.scroll = diff;
-                        }
-                    }
-                }
-            }
-            app.history.scroll
-        };
-
-        let preview = Paragraph::new(preview_chat)
-            .wrap(Wrap { trim: false })
-            .scroll((preview_scroll, 0))
-            .block(
-                Block::default()
-                    .title(" Preview ")
-                    .title_alignment(Alignment::Center)
-                    .borders(Borders::ALL)
-                    .style(Style::default())
-                    .border_type(BorderType::Rounded)
-                    .border_style(match app.focused_block {
-                        FocusedBlock::Preview => Style::default().fg(Color::Yellow),
-                        _ => Style::default(),
-                    }),
-            );
-
-        frame.render_widget(Clear, area);
-        frame.render_widget(history, history_block);
-        frame.render_widget(preview, preview_block);
+        app.history.render(frame, area, app.focused_block.clone());
     }
 
-    // Show Help
+    // Help
     if let FocusedBlock::Help = app.focused_block {
         app.prompt.update(&FocusedBlock::Help);
         let area = help_rect(frame_size);
         app.help.render(frame, area);
     }
 
-    // Show notifications
+    // Notifications
     for (i, notif) in app.notifications.iter_mut().enumerate() {
         let area = notification_rect(i as u16, frame_size);
         notif.render(frame, area);
