@@ -2,7 +2,7 @@ use std::sync::mpsc::Sender;
 
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     text::Text,
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
     Frame,
@@ -136,6 +136,10 @@ impl History<'_> {
                 Block::default()
                     .borders(Borders::ALL)
                     .title(" History ")
+                    .title_style(match focused_block {
+                        FocusedBlock::History => Style::default().bold(),
+                        _ => Style::default(),
+                    })
                     .title_alignment(Alignment::Center)
                     .style(Style::default())
                     .border_style(Style::default())
@@ -155,6 +159,10 @@ impl History<'_> {
         .block(
             Block::default()
                 .title(" Preview ")
+                .title_style(match focused_block {
+                    FocusedBlock::Preview => Style::default().bold(),
+                    _ => Style::default(),
+                })
                 .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
                 .style(Style::default())
