@@ -3,8 +3,6 @@ use std;
 use crate::app::{App, FocusedBlock};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::Style,
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
 
@@ -92,7 +90,6 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let frame_size = frame.size();
 
     let prompt_block_height = app.prompt.height(&frame_size) + 3;
-    let chat_block_height = frame_size.height - prompt_block_height;
 
     let (chat_block, prompt_block) = {
         let chunks = Layout::default()
@@ -102,60 +99,10 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         (chunks[0], chunks[1])
     };
 
-    // Chat block
-    let chat_text = {
-        let mut c = app.chat.formatted_chat.clone();
-        c.extend(app.answer.formatted_answer.clone());
-        c
-    };
-
-    let chat_messages_height = {
-        let nb_lines = chat_text.lines.len() + 3;
-        let messages_height = chat_text.lines.iter().fold(nb_lines, |acc, line| {
-            acc + line.width() / frame_size.width as usize
-        });
-
-        messages_height
-    };
-
-    let chat_paragraph = {
-        let diff: isize = chat_messages_height as isize - chat_block_height as isize;
-
-        if let FocusedBlock::Chat = app.focused_block {
-            if diff > 0 {
-                let diff = diff as u16;
-                app.chat.length = diff;
-
-                if app.chat.scroll >= diff {
-                    app.chat.scroll = diff;
-                }
-            }
-        } else {
-            app.chat.scroll = if diff > 0 { diff as u16 } else { 0 };
-        }
-
-        Paragraph::new(chat_text)
-            .scroll((app.chat.scroll, 0))
-            .wrap(Wrap { trim: false })
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .style(Style::default())
-                    .border_type(match app.focused_block {
-                        FocusedBlock::Chat => BorderType::Thick,
-                        _ => BorderType::Rounded,
-                    })
-                    .border_style(match app.focused_block {
-                        FocusedBlock::Chat => Style::default(),
-                        _ => Style::default(),
-                    }),
-            )
-    };
-
-    // Render
+    // Chat
+    app.chat.render(frame, chat_block, &app.focused_block);
 
     // Prompt
-    frame.render_widget(chat_paragraph, chat_block);
     app.prompt.render(frame, prompt_block);
 
     // History
