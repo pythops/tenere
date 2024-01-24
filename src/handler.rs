@@ -158,6 +158,7 @@ pub fn handle_key_events(
             FocusedBlock::History => {
                 app.focused_block = FocusedBlock::Preview;
                 app.history.preview.scroll = 0;
+                app.prompt.update(&app.focused_block);
             }
             FocusedBlock::Preview => {
                 app.focused_block = FocusedBlock::History;
@@ -171,6 +172,7 @@ pub fn handle_key_events(
             if c == app.config.key_bindings.show_help && app.prompt.mode != Mode::Insert =>
         {
             app.focused_block = FocusedBlock::Help;
+            app.prompt.update(&app.focused_block);
         }
 
         // Show history
@@ -180,6 +182,7 @@ pub fn handle_key_events(
                 && key_event.modifiers == KeyModifiers::CONTROL =>
         {
             app.focused_block = FocusedBlock::History;
+            app.prompt.update(&app.focused_block);
         }
 
         // Discard help & history popups
