@@ -1,6 +1,6 @@
 use ratatui::{
     layout::{Alignment, Constraint, Rect},
-    style::Style,
+    style::{Style, Stylize},
     widgets::{Block, BorderType, Borders, Clear, Padding, Row, Table, TableState},
     Frame,
 };
@@ -89,6 +89,7 @@ impl Help {
             Block::default()
                 .padding(Padding::uniform(2))
                 .title(" Help ")
+                .title_style(Style::default().bold())
                 .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
                 .style(Style::default())
