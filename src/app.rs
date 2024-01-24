@@ -1,6 +1,6 @@
-use crate::help::Help;
 use crate::history::History;
 use crate::prompt::Prompt;
+use crate::{chat::Chat, help::Help};
 use std;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
@@ -9,7 +9,7 @@ use crate::notification::Notification;
 use crate::spinner::Spinner;
 use crate::{config::Config, formatter::Formatter};
 use arboard::Clipboard;
-use ratatui::text::{Line, Text};
+use ratatui::text::Line;
 
 use std::sync::Arc;
 
@@ -24,27 +24,12 @@ pub enum FocusedBlock {
     Help,
 }
 
-#[derive(Debug, Default)]
-pub struct Chat<'a> {
-    pub messages: Vec<String>,
-    pub formatted_chat: Text<'a>,
-    pub scroll: u16,
-    pub length: u16,
-}
-
-#[derive(Debug, Default)]
-pub struct Answer<'a> {
-    pub answer: String,
-    pub formatted_answer: Text<'a>,
-}
-
 pub struct App<'a> {
     pub running: bool,
     pub prompt: Prompt<'a>,
     pub chat: Chat<'a>,
     pub focused_block: FocusedBlock,
     pub llm_messages: Vec<HashMap<String, String>>,
-    pub answer: Answer<'a>,
     pub history: History<'a>,
     pub notifications: Vec<Notification>,
     pub spinner: Spinner,
@@ -60,10 +45,9 @@ impl<'a> App<'a> {
         Self {
             running: true,
             prompt: Prompt::default(),
-            chat: Chat::default(),
+            chat: Chat::new(),
             focused_block: FocusedBlock::Prompt,
             llm_messages: Vec::new(),
-            answer: Answer::default(),
             history: History::new(),
             notifications: Vec::new(),
             spinner: Spinner::default(),

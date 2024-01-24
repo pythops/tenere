@@ -2,7 +2,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 use std::collections::HashMap;
 use std::{env, io};
-use tenere::app::{Answer, App, AppResult};
+use tenere::app::{App, AppResult};
 use tenere::cli;
 use tenere::config::Config;
 use tenere::event::{Event, EventHandler};
@@ -11,7 +11,6 @@ use tenere::handler::handle_key_events;
 use tenere::llm::LLMAnswer;
 use tenere::tui::Tui;
 
-use ratatui::text::Text;
 use tenere::llm::{LLMBackend, LLMModel};
 
 use std::sync::Arc;
@@ -53,42 +52,26 @@ fn main() -> AppResult<()> {
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
             Event::LLMEvent(LLMAnswer::Answer(answer)) => {
-                if app.answer.answer.is_empty() {
-                    app.answer
-                        .answer
-                        .push_str(format!("🤖: {}", answer).as_str());
-                }
-                app.answer.answer.push_str(answer.as_str());
-                app.answer.formatted_answer = formatter.format(&app.answer.answer);
+                app.chat
+                    .handle_answer(LLMAnswer::Answer(answer), &formatter);
             }
             Event::LLMEvent(LLMAnswer::EndAnswer) => {
-                app.answer.answer = app
-                    .answer
-                    .answer
-                    .strip_prefix("🤖: ")
-                    .unwrap_or_default()
-                    .to_string();
+                app.chat.handle_answer(LLMAnswer::EndAnswer, &formatter);
 
                 // TODO: factor this into llm struct or trait
                 let mut conv: HashMap<String, String> = HashMap::new();
                 conv.insert("role".to_string(), "user".to_string());
-                conv.insert("content".to_string(), app.answer.answer.clone());
+                conv.insert("content".to_string(), app.chat.answer.plain_answer.clone());
                 app.llm_messages.push(conv);
-
-                app.chat.formatted_chat.extend(app.answer.formatted_answer);
-                app.chat.formatted_chat.extend(Text::raw("\n"));
-
-                app.chat.messages.push(format!("🤖: {}", app.answer.answer));
-
-                app.answer = Answer::default();
 
                 app.terminate_response_signal
                     .store(false, std::sync::atomic::Ordering::Relaxed);
             }
             Event::LLMEvent(LLMAnswer::StartAnswer) => {
                 app.spinner.active = false;
-                app.chat.formatted_chat.lines.pop();
+                app.chat.handle_answer(LLMAnswer::StartAnswer, &formatter);
             }
+
             Event::Notification(notification) => {
                 app.notifications.push(notification);
             }

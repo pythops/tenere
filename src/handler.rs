@@ -1,5 +1,5 @@
 use crate::llm::LLMAnswer;
-use crate::{app::Chat, prompt::Mode};
+use crate::{chat::Chat, prompt::Mode};
 
 use crate::{
     app::{App, AppResult, FocusedBlock},
@@ -46,6 +46,9 @@ pub fn handle_key_events(
             }
 
             FocusedBlock::Chat => {
+                app.chat
+                    .automatic_scroll
+                    .store(false, std::sync::atomic::Ordering::Relaxed);
                 app.chat.scroll = app.chat.scroll.saturating_add(1);
             }
 
@@ -67,6 +70,9 @@ pub fn handle_key_events(
             }
 
             FocusedBlock::Chat => {
+                app.chat
+                    .automatic_scroll
+                    .store(false, std::sync::atomic::Ordering::Relaxed);
                 app.chat.scroll = app.chat.scroll.saturating_sub(1);
             }
 
@@ -79,7 +85,7 @@ pub fn handle_key_events(
 
         // `G`:  Mo to the bottom
         KeyCode::Char('G') => match app.focused_block {
-            FocusedBlock::Chat => app.chat.scroll = app.chat.length,
+            FocusedBlock::Chat => app.chat.move_to_bottom(),
             FocusedBlock::History => app.history.move_to_bottom(),
             _ => (),
         },
@@ -99,7 +105,7 @@ pub fn handle_key_events(
                 .text
                 .push(app.chat.formatted_chat.clone());
 
-            app.history.text.push(app.chat.messages.clone());
+            app.history.text.push(app.chat.plain_chat.clone());
 
             app.chat = Chat::default();
             app.llm_messages = Vec::new();
@@ -120,7 +126,7 @@ pub fn handle_key_events(
                 FocusedBlock::Chat | FocusedBlock::Prompt => {
                     match std::fs::write(
                         app.config.archive_file_name.clone(),
-                        app.chat.messages.join(""),
+                        app.chat.plain_chat.join(""),
                     ) {
                         Ok(_) => {
                             let notif = Notification::new(
@@ -145,12 +151,16 @@ pub fn handle_key_events(
         KeyCode::Tab => match app.focused_block {
             FocusedBlock::Chat => {
                 app.focused_block = FocusedBlock::Prompt;
+
+                app.chat
+                    .automatic_scroll
+                    .store(true, std::sync::atomic::Ordering::Relaxed);
+
                 app.prompt.update(&app.focused_block);
             }
             FocusedBlock::Prompt => {
-                app.chat.scroll = (app.chat.formatted_chat.height()
-                    + app.answer.formatted_answer.height())
-                    as u16;
+                app.chat.move_to_bottom();
+
                 app.focused_block = FocusedBlock::Chat;
                 app.prompt.mode = Mode::Normal;
                 app.prompt.update(&app.focused_block);
@@ -173,6 +183,9 @@ pub fn handle_key_events(
         {
             app.focused_block = FocusedBlock::Help;
             app.prompt.update(&app.focused_block);
+            app.chat
+                .automatic_scroll
+                .store(true, std::sync::atomic::Ordering::Relaxed);
         }
 
         // Show history
@@ -183,6 +196,9 @@ pub fn handle_key_events(
         {
             app.focused_block = FocusedBlock::History;
             app.prompt.update(&app.focused_block);
+            app.chat
+                .automatic_scroll
+                .store(true, std::sync::atomic::Ordering::Relaxed);
         }
 
         // Discard help & history popups
@@ -207,11 +223,11 @@ pub fn handle_key_events(
 
                 app.prompt.clear();
 
-                app.chat.messages.push(format!(" : {}\n", user_input));
+                app.chat.plain_chat.push(format!("👤 : {}\n", user_input));
 
                 app.chat.formatted_chat.extend(
                     app.formatter
-                        .format(format!(" : {}\n", user_input).as_str()),
+                        .format(format!("👤: {}\n", user_input).as_str()),
                 );
 
                 let conv = HashMap::from([
