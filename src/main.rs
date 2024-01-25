@@ -11,7 +11,7 @@ use tenere::handler::handle_key_events;
 use tenere::llm::LLMAnswer;
 use tenere::tui::Tui;
 
-use tenere::llm::{LLMBackend, LLMModel};
+use tenere::llm::LLMModel;
 
 use std::sync::Arc;
 
@@ -34,7 +34,7 @@ fn main() -> AppResult<()> {
 
     let mut app = App::new(config.clone(), &formatter);
 
-    let llm = Arc::new(LLMModel::init(LLMBackend::ChatGPT, config));
+    let llm = Arc::new(LLMModel::init(&config.model, config.clone()));
 
     let backend = CrosstermBackend::new(io::stderr());
     let terminal = Terminal::new(backend)?;

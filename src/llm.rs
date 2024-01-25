@@ -32,7 +32,7 @@ pub enum LLMBackend {
 pub struct LLMModel {}
 
 impl LLMModel {
-    pub fn init(model: LLMBackend, config: Arc<Config>) -> impl LLM {
+    pub fn init(model: &LLMBackend, config: Arc<Config>) -> impl LLM {
         match model {
             LLMBackend::ChatGPT => ChatGPT::new(config.chatgpt.clone()),
         }
