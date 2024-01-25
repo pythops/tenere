@@ -12,7 +12,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::sync::mpsc::Sender;
 use std::{collections::HashMap, thread};
 
-use ratatui::text::Line;
+use ratatui::text::{Line, Text};
 
 use crate::notification::{Notification, NotificationLevel};
 use std::sync::Arc;
@@ -237,10 +237,16 @@ pub fn handle_key_events(
 
                 app.chat.plain_chat.push(format!("👤 : {}\n", user_input));
 
-                app.chat.formatted_chat.extend(
-                    app.formatter
-                        .format(format!("👤: {}\n", user_input).as_str()),
-                );
+                if app.chat.formatted_chat.width() == 0 {
+                    app.chat.formatted_chat = app
+                        .formatter
+                        .format(format!("👤: {}\n", user_input).as_str());
+                } else {
+                    app.chat.formatted_chat.extend(
+                        app.formatter
+                            .format(format!("👤: {}\n", user_input).as_str()),
+                    );
+                }
 
                 let conv = HashMap::from([
                     ("role".into(), "user".into()),

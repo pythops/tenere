@@ -64,7 +64,6 @@ impl Chat<'_> {
 
                 self.answer.formatted_answer =
                     formatter.format(format!("🤖: {}", &self.answer.plain_answer).as_str());
-                // self.move_to_bottom();
             }
 
             LLMAnswer::EndAnswer => {
