@@ -39,9 +39,9 @@ pub fn help_rect(r: Rect) -> Rect {
         .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Percentage(22),
-                Constraint::Length(18),
-                Constraint::Percentage(20),
+                Constraint::Percentage(35),
+                Constraint::Min(10),
+                Constraint::Percentage(35),
             ]
             .as_ref(),
         )
@@ -51,9 +51,9 @@ pub fn help_rect(r: Rect) -> Rect {
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Length((r.width - 85) / 2),
-                Constraint::Length(85),
-                Constraint::Length((r.width - 85) / 2),
+                Constraint::Length((r.width - 80) / 2),
+                Constraint::Min(80),
+                Constraint::Length((r.width - 80) / 2),
             ]
             .as_ref(),
         )
