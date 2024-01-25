@@ -21,7 +21,6 @@ pub enum Mode {
 
 pub struct Prompt<'a> {
     pub mode: Mode,
-    pub previous_key: KeyCode,
     pub formatted_prompt: Text<'a>,
     pub editor: TextArea<'a>,
     pub block: Block<'a>,
@@ -41,7 +40,6 @@ impl Default for Prompt<'_> {
 
         Self {
             mode: Mode::Normal,
-            previous_key: KeyCode::Null,
             formatted_prompt: Text::raw(""),
             editor,
             block,
@@ -91,7 +89,12 @@ impl Prompt<'_> {
             });
     }
 
-    pub fn handler(&mut self, key_event: KeyEvent, clipboard: Option<&mut Clipboard>) {
+    pub fn handler(
+        &mut self,
+        key_event: KeyEvent,
+        previous_key: KeyCode,
+        clipboard: Option<&mut Clipboard>,
+    ) {
         match self.mode {
             Mode::Insert => match key_event.code {
                 KeyCode::Enter => {
@@ -149,7 +152,7 @@ impl Prompt<'_> {
                     self.editor.move_cursor(CursorMove::Forward);
                 }
 
-                KeyCode::Char('w') => match self.previous_key {
+                KeyCode::Char('w') => match previous_key {
                     KeyCode::Char('d') => {
                         self.editor.delete_next_word();
                     }
@@ -162,7 +165,7 @@ impl Prompt<'_> {
                     _ => self.editor.move_cursor(CursorMove::WordForward),
                 },
 
-                KeyCode::Char('b') => match self.previous_key {
+                KeyCode::Char('b') => match previous_key {
                     KeyCode::Char('d') => {
                         self.editor.delete_word();
                     }
@@ -175,7 +178,7 @@ impl Prompt<'_> {
                     _ => self.editor.move_cursor(CursorMove::WordBack),
                 },
 
-                KeyCode::Char('$') => match self.previous_key {
+                KeyCode::Char('$') => match previous_key {
                     KeyCode::Char('d') => {
                         self.editor.delete_line_by_end();
                     }
@@ -187,7 +190,7 @@ impl Prompt<'_> {
                     _ => self.editor.move_cursor(CursorMove::End),
                 },
 
-                KeyCode::Char('0') => match self.previous_key {
+                KeyCode::Char('0') => match previous_key {
                     KeyCode::Char('d') => {
                         self.editor.delete_line_by_head();
                     }
@@ -202,7 +205,7 @@ impl Prompt<'_> {
                 KeyCode::Char('G') => self.editor.move_cursor(CursorMove::Bottom),
 
                 KeyCode::Char('g') => {
-                    if self.previous_key == KeyCode::Char('g') {
+                    if previous_key == KeyCode::Char('g') {
                         self.editor.move_cursor(CursorMove::Jump(0, 0))
                     }
                 }
@@ -214,14 +217,14 @@ impl Prompt<'_> {
                 }
 
                 KeyCode::Char('d') => {
-                    if self.previous_key == KeyCode::Char('d') {
+                    if previous_key == KeyCode::Char('d') {
                         self.editor.move_cursor(CursorMove::Head);
                         self.editor.delete_line_by_end();
                     }
                 }
 
                 KeyCode::Char('c') => {
-                    if self.previous_key == KeyCode::Char('c') {
+                    if previous_key == KeyCode::Char('c') {
                         self.editor.move_cursor(CursorMove::Head);
                         self.editor.delete_line_by_end();
                         self.mode = Mode::Insert;
@@ -297,8 +300,6 @@ impl Prompt<'_> {
                 _ => {}
             },
         }
-
-        self.previous_key = key_event.code;
     }
 
     pub fn render(&mut self, frame: &mut Frame, block: Rect) {
