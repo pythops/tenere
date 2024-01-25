@@ -12,7 +12,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::sync::mpsc::Sender;
 use std::{collections::HashMap, thread};
 
-use ratatui::text::{Line, Text};
+use ratatui::text::Line;
 
 use crate::notification::{Notification, NotificationLevel};
 use std::sync::Arc;
