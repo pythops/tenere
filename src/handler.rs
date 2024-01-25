@@ -91,7 +91,19 @@ pub fn handle_key_events(
         },
 
         // `gg`: Move to the top
-        //TODO:
+        KeyCode::Char('g') => {
+            if app.previous_key == KeyCode::Char('g') {
+                match app.focused_block {
+                    FocusedBlock::Chat => {
+                        app.chat.move_to_top();
+                    }
+                    FocusedBlock::History => {
+                        app.history.move_to_top();
+                    }
+                    _ => (),
+                }
+            }
+        }
 
         // New chat
         KeyCode::Char(c)
@@ -265,8 +277,11 @@ pub fn handle_key_events(
             }
         }
 
-        app.prompt.handler(key_event, app.clipboard.as_mut());
+        app.prompt
+            .handler(key_event, app.previous_key, app.clipboard.as_mut());
     }
+
+    app.previous_key = key_event.code;
 
     Ok(())
 }

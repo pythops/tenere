@@ -9,6 +9,7 @@ use crate::notification::Notification;
 use crate::spinner::Spinner;
 use crate::{config::Config, formatter::Formatter};
 use arboard::Clipboard;
+use crossterm::event::KeyCode;
 use ratatui::text::Line;
 
 use std::sync::Arc;
@@ -36,6 +37,7 @@ pub struct App<'a> {
     pub terminate_response_signal: Arc<AtomicBool>,
     pub clipboard: Option<Clipboard>,
     pub help: Help,
+    pub previous_key: KeyCode,
     pub config: Arc<Config>,
     pub formatter: &'a Formatter<'a>,
 }
@@ -54,6 +56,7 @@ impl<'a> App<'a> {
             terminate_response_signal: Arc::new(AtomicBool::new(false)),
             clipboard: Clipboard::new().ok(),
             help: Help::new(),
+            previous_key: KeyCode::Null,
             config,
             formatter,
         }

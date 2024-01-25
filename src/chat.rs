@@ -93,8 +93,12 @@ impl Chat<'_> {
     }
 
     pub fn move_to_bottom(&mut self) {
-        // self.scroll = (self.formatted_chat.height() + self.answer.formatted_answer.height())
-        //     .saturating_sub((self.area_height - 2).into());
+        self.scroll = (self.formatted_chat.height() + self.answer.formatted_answer.height())
+            .saturating_sub((self.area_height - 2).into()) as u16;
+    }
+
+    pub fn move_to_top(&mut self) {
+        self.scroll = 0;
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect, focused_block: &FocusedBlock) {
