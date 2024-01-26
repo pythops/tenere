@@ -22,14 +22,7 @@ fn main() -> AppResult<()> {
 
     let config = Arc::new(Config::load());
 
-    // TODO: move this to init app
-    // Text formatter
-    let formatter_config = bat::config::Config {
-        colored_output: true,
-        ..Default::default()
-    };
-    let formatter_assets = bat::assets::HighlightingAssets::from_binary();
-
+    let (formatter_config, formatter_assets) = Formatter::init();
     let formatter = Formatter::new(&formatter_config, &formatter_assets);
 
     let mut app = App::new(config.clone(), &formatter);
