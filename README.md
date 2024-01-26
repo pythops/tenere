@@ -97,7 +97,8 @@ new_chat = 'n'
 save_chat = 's'
 ```
 
-⚠️ To avoid overlapping with vim key bindings, you need to use `ctrl` + `key` except for help `?`.
+> [!NOTE]
+> To avoid overlapping with vim key bindings, you need to use `ctrl` + `key` except for help `?`.
 
 ## Chatgpt
 
