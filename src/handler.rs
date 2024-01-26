@@ -5,7 +5,6 @@ use crate::{
     app::{App, AppResult, FocusedBlock},
     event::Event,
 };
-use colored::*;
 
 use crate::llm::LLM;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -274,9 +273,7 @@ pub fn handle_key_events(
                             .send(Event::LLMEvent(LLMAnswer::StartAnswer))
                             .unwrap();
                         sender
-                            .send(Event::LLMEvent(LLMAnswer::Answer(
-                                e.to_string().red().to_string(),
-                            )))
+                            .send(Event::LLMEvent(LLMAnswer::Answer(e.to_string())))
                             .unwrap();
                     }
                 });
