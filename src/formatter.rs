@@ -13,6 +13,15 @@ impl<'a> Formatter<'a> {
         Self { controller }
     }
 
+    pub fn init() -> (Config<'static>, HighlightingAssets) {
+        let config = bat::config::Config {
+            colored_output: true,
+            ..Default::default()
+        };
+        let assets = bat::assets::HighlightingAssets::from_binary();
+        (config, assets)
+    }
+
     pub fn format(&self, input: &str) -> Text<'static> {
         let mut buffer = String::new();
         let input = Input::from_bytes(input.as_bytes()).name("text.md");
