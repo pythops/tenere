@@ -22,8 +22,8 @@
 
 ## 💎 Supported LLMs
 
-[x] ChatGPT
-[ ] ollama (coming soon)
+- [x] ChatGPT
+- [ ] ollama (coming soon)
 
 <br>
 
