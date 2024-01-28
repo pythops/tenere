@@ -22,7 +22,8 @@
 
 ## 💎 Supported LLMs
 
-Only **ChatGPT** is supported for the moment. But I'm planning to support more models in the future.
+[x] ChatGPT
+[ ] ollama (coming soon)
 
 <br>
 
@@ -181,7 +182,7 @@ There are 3 modes like vim: `Normal`, `Visual` and `Insert`.
 
 `$`: Move the cursor to the end of the line.
 
-`G`: Go to th end.
+`G`: Go to the end.
 
 `gg`: Go to the top.
 
