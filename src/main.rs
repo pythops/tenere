@@ -17,7 +17,8 @@ use std::sync::Arc;
 
 use clap::crate_version;
 
-fn main() -> AppResult<()> {
+#[tokio::main]
+async fn main() -> AppResult<()> {
     cli::cli().version(crate_version!()).get_matches();
 
     let config = Arc::new(Config::load());
@@ -27,7 +28,7 @@ fn main() -> AppResult<()> {
 
     let mut app = App::new(config.clone(), &formatter);
 
-    let llm = Arc::new(LLMModel::init(&config.model, config.clone()));
+    let llm = Arc::new(LLMModel::init(&config.model, config.clone()).await);
 
     let backend = CrosstermBackend::new(io::stderr());
     let terminal = Terminal::new(backend)?;
@@ -37,10 +38,11 @@ fn main() -> AppResult<()> {
 
     while app.running {
         tui.draw(&mut app)?;
-        match tui.events.next()? {
+        match tui.events.next().await? {
             Event::Tick => app.tick(),
             Event::Key(key_event) => {
-                handle_key_events(key_event, &mut app, llm.clone(), tui.events.sender.clone())?
+                handle_key_events(key_event, &mut app, llm.clone(), tui.events.sender.clone())
+                    .await?;
             }
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}

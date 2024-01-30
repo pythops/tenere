@@ -1,18 +1,20 @@
 use crate::chatgpt::ChatGPT;
 use crate::config::Config;
 use crate::event::Event;
+use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
-use std::sync::mpsc::Sender;
+use tokio::sync::mpsc::UnboundedSender;
 
 use std::sync::Arc;
 
+#[async_trait]
 pub trait LLM: Send + Sync {
-    fn ask(
+    async fn ask(
         &self,
         chat_messages: Vec<HashMap<String, String>>,
-        sender: &Sender<Event>,
+        sender: UnboundedSender<Event>,
         terminate_response_signal: Arc<AtomicBool>,
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
@@ -32,7 +34,7 @@ pub enum LLMBackend {
 pub struct LLMModel {}
 
 impl LLMModel {
-    pub fn init(model: &LLMBackend, config: Arc<Config>) -> impl LLM {
+    pub async fn init(model: &LLMBackend, config: Arc<Config>) -> impl LLM {
         match model {
             LLMBackend::ChatGPT => ChatGPT::new(config.chatgpt.clone()),
         }

@@ -10,12 +10,11 @@ homepage = "https://github.com/pythops/tenere"
 repository = "https://github.com/pythops/tenere"
 
 [dependencies]
-crossterm = "0.27"
+crossterm = { version = "0.27", features = ["event-stream"] }
 ratatui = { version = "0.25", features = ["all-widgets"] }
 tui-textarea = { version = "0.4" }
 unicode-width = "0.1"
 reqwest = { version = "0.11", default-features = false, features = [
-  "blocking",
   "json",
   "rustls-tls",
 ] }
@@ -29,3 +28,6 @@ dirs = "5"
 regex = "1"
 bat = "0.24"
 arboard = "3"
+async-trait = "0.1"
+futures = "0.3"
+tokio = { version = "1", features = ["full"] }

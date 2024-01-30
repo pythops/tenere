@@ -8,19 +8,20 @@ use crate::{
 
 use crate::llm::LLM;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::sync::mpsc::Sender;
-use std::{collections::HashMap, thread};
+use std::collections::HashMap;
 
 use ratatui::text::Line;
 
 use crate::notification::{Notification, NotificationLevel};
 use std::sync::Arc;
 
-pub fn handle_key_events(
+use tokio::sync::mpsc::UnboundedSender;
+
+pub async fn handle_key_events(
     key_event: KeyEvent,
-    app: &mut App,
+    app: &mut App<'_>,
     llm: Arc<impl LLM + 'static>,
-    sender: Sender<Event>,
+    sender: UnboundedSender<Event>,
 ) -> AppResult<()> {
     match key_event.code {
         // Quit the app
@@ -266,8 +267,15 @@ pub fn handle_key_events(
 
                 let sender = sender.clone();
 
-                thread::spawn(move || {
-                    let res = llm.ask(llm_messages.to_vec(), &sender, terminate_response_signal);
+                tokio::spawn(async move {
+                    let res = llm
+                        .ask(
+                            llm_messages.to_vec(),
+                            sender.clone(),
+                            terminate_response_signal,
+                        )
+                        .await;
+
                     if let Err(e) = res {
                         sender
                             .send(Event::LLMEvent(LLMAnswer::StartAnswer))
