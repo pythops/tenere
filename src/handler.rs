@@ -8,19 +8,19 @@ use crate::{
 
 use crate::llm::LLM;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::collections::HashMap;
 
 use ratatui::text::Line;
 
 use crate::notification::{Notification, NotificationLevel};
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use tokio::sync::mpsc::UnboundedSender;
 
 pub async fn handle_key_events(
     key_event: KeyEvent,
     app: &mut App<'_>,
-    llm: Arc<impl LLM + 'static>,
+    llm: Arc<Mutex<impl LLM + 'static>>,
     sender: UnboundedSender<Event>,
 ) -> AppResult<()> {
     match key_event.code {
@@ -120,7 +120,12 @@ pub async fn handle_key_events(
             app.history.text.push(app.chat.plain_chat.clone());
 
             app.chat = Chat::default();
-            app.llm_messages = Vec::new();
+
+            let llm = llm.clone();
+            {
+                let mut llm = llm.lock().await;
+                llm.clear();
+            }
 
             app.chat.scroll = 0;
         }
@@ -248,13 +253,11 @@ pub async fn handle_key_events(
                     );
                 }
 
-                let conv = HashMap::from([
-                    ("role".into(), "user".into()),
-                    ("content".into(), user_input.into()),
-                ]);
-                app.llm_messages.push(conv);
-
-                let llm_messages = app.llm_messages.clone();
+                let llm = llm.clone();
+                {
+                    let mut llm = llm.lock().await;
+                    llm.append_chat_msg(user_input.into());
+                }
 
                 app.spinner.active = true;
 
@@ -267,14 +270,11 @@ pub async fn handle_key_events(
 
                 let sender = sender.clone();
 
+                let llm = llm.clone();
+
                 tokio::spawn(async move {
-                    let res = llm
-                        .ask(
-                            llm_messages.to_vec(),
-                            sender.clone(),
-                            terminate_response_signal,
-                        )
-                        .await;
+                    let llm = llm.lock().await;
+                    let res = llm.ask(sender.clone(), terminate_response_signal).await;
 
                     if let Err(e) = res {
                         sender
