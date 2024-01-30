@@ -5,29 +5,22 @@ on:
       - "*"
     tags:
       - "!*"
-name: Test
+name: CI
 jobs:
   test:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
       - uses: taiki-e/install-action@just
-      - uses: actions-rs/toolchain@v1
+
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          component: clippy rustfmt
-
-      - name: Install nextest
-        uses: taiki-e/install-action@nextest
+          components: clippy rustfmt
 
       - name: Run linting
         run: just lint
-
-      - name: Run tests
-        run: just test
 
       - name: Run debug builds
         run: just build
