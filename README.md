@@ -16,14 +16,15 @@
 - Chat history
 - Save chats to files
 - Vim keybinding (most common ops)
-- Copy text from/to clipboard
+- Copy text from/to clipboard (works only on the prompt)
 
 <br>
 
 ## 💎 Supported LLMs
 
 - [x] ChatGPT
-- [ ] ollama (coming soon)
+- [ ] ollama (todo)
+- [ ] llama.cpp (todo)
 
 <br>
 
@@ -237,6 +238,8 @@ There are 3 modes like vim: `Normal`, `Visual` and `Insert`.
 `p`: Paste
 
 #### Visual mode
+
+`v`: Switch to visual.
 
 `y`: Yank the selected text
 
