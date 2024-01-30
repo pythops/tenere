@@ -1,10 +1,11 @@
+use std::time::Duration;
+
 use crate::app::AppResult;
 use crate::llm::LLMAnswer;
 use crate::notification::Notification;
-use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
-use std::sync::mpsc;
-use std::thread;
-use std::time::{Duration, Instant};
+use crossterm::event::{Event as CrosstermEvent, KeyEvent, MouseEvent};
+use futures::{FutureExt, StreamExt};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -19,41 +20,50 @@ pub enum Event {
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct EventHandler {
-    pub sender: mpsc::Sender<Event>,
-    receiver: mpsc::Receiver<Event>,
-    handler: thread::JoinHandle<()>,
+    pub sender: UnboundedSender<Event>,
+    receiver: UnboundedReceiver<Event>,
+    handler: tokio::task::JoinHandle<()>,
 }
 
 impl EventHandler {
     pub fn new(tick_rate: u64) -> Self {
         let tick_rate = Duration::from_millis(tick_rate);
-        let (sender, receiver) = mpsc::channel();
-        let handler = {
-            let sender = sender.clone();
-            thread::spawn(move || {
-                let mut last_tick = Instant::now();
-                loop {
-                    let timeout = tick_rate
-                        .checked_sub(last_tick.elapsed())
-                        .unwrap_or(tick_rate);
-
-                    if event::poll(timeout).expect("no events available") {
-                        match event::read().expect("unable to read event") {
-                            CrosstermEvent::Key(e) => sender.send(Event::Key(e)),
-                            CrosstermEvent::Mouse(e) => sender.send(Event::Mouse(e)),
-                            CrosstermEvent::Resize(w, h) => sender.send(Event::Resize(w, h)),
-                            _ => unimplemented!(),
+        let (sender, receiver) = unbounded_channel();
+        let _sender = sender.clone();
+        let handler = tokio::spawn(async move {
+            let mut reader = crossterm::event::EventStream::new();
+            let mut tick = tokio::time::interval(tick_rate);
+            loop {
+                let tick_delay = tick.tick();
+                let crossterm_event = reader.next().fuse();
+                tokio::select! {
+                  _ = tick_delay => {
+                    _sender.send(Event::Tick).unwrap();
+                  }
+                  Some(Ok(evt)) = crossterm_event => {
+                    match evt {
+                      CrosstermEvent::Key(key) => {
+                        if key.kind == crossterm::event::KeyEventKind::Press {
+                          _sender.send(Event::Key(key)).unwrap();
                         }
-                        .expect("failed to send terminal event")
+                      },
+                      CrosstermEvent::Mouse(mouse) => {
+                        _sender.send(Event::Mouse(mouse)).unwrap();
+                      },
+                      CrosstermEvent::Resize(x, y) => {
+                        _sender.send(Event::Resize(x, y)).unwrap();
+                      },
+                      CrosstermEvent::FocusLost => {
+                      },
+                      CrosstermEvent::FocusGained => {
+                      },
+                      CrosstermEvent::Paste(_) => {
+                      },
                     }
-
-                    if last_tick.elapsed() >= tick_rate {
-                        sender.send(Event::Tick).expect("failed to send tick event");
-                        last_tick = Instant::now();
-                    }
-                }
-            })
-        };
+                  }
+                };
+            }
+        });
         Self {
             sender,
             receiver,
@@ -61,7 +71,13 @@ impl EventHandler {
         }
     }
 
-    pub fn next(&self) -> AppResult<Event> {
-        Ok(self.receiver.recv()?)
+    pub async fn next(&mut self) -> AppResult<Event> {
+        self.receiver
+            .recv()
+            .await
+            .ok_or(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "This is an IO error",
+            )))
     }
 }

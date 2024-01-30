@@ -1,4 +1,4 @@
-use std::sync::mpsc::Sender;
+use tokio::sync::mpsc::UnboundedSender;
 
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -83,7 +83,7 @@ impl History<'_> {
         self.state.select(Some(i));
     }
 
-    pub fn save(&mut self, archive_file_name: &str, sender: Sender<Event>) {
+    pub fn save(&mut self, archive_file_name: &str, sender: UnboundedSender<Event>) {
         if !self.text.is_empty() {
             match std::fs::write(
                 archive_file_name,

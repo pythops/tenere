@@ -1,12 +1,12 @@
 use crate::app::{App, AppResult};
 use crate::event::EventHandler;
 use crate::ui;
-use crossterm::cursor::EnableBlinking;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::backend::Backend;
 use ratatui::Terminal;
 use std::io;
+use std::panic;
 
 #[derive(Debug)]
 pub struct Tui<B: Backend> {
@@ -21,12 +21,14 @@ impl<B: Backend> Tui<B> {
 
     pub fn init(&mut self) -> AppResult<()> {
         terminal::enable_raw_mode()?;
-        crossterm::execute!(
-            io::stderr(),
-            EnterAlternateScreen,
-            EnableMouseCapture,
-            EnableBlinking,
-        )?;
+        crossterm::execute!(io::stderr(), EnterAlternateScreen, EnableMouseCapture)?;
+
+        let panic_hook = panic::take_hook();
+        panic::set_hook(Box::new(move |panic| {
+            Self::reset().expect("failed to reset the terminal");
+            panic_hook(panic);
+        }));
+
         self.terminal.hide_cursor()?;
         self.terminal.clear()?;
         Ok(())
@@ -37,9 +39,14 @@ impl<B: Backend> Tui<B> {
         Ok(())
     }
 
-    pub fn exit(&mut self) -> AppResult<()> {
+    fn reset() -> AppResult<()> {
         terminal::disable_raw_mode()?;
         crossterm::execute!(io::stderr(), LeaveAlternateScreen, DisableMouseCapture)?;
+        Ok(())
+    }
+
+    pub fn exit(&mut self) -> AppResult<()> {
+        Self::reset()?;
         self.terminal.show_cursor()?;
         Ok(())
     }

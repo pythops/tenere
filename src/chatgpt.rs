@@ -1,9 +1,11 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use tokio::time::{sleep, Duration};
 
 use crate::event::Event;
+use async_trait::async_trait;
 use regex::Regex;
-use std::{thread, time};
+use tokio::sync::mpsc::UnboundedSender;
 
 use crate::config::ChatGPTConfig;
 use crate::llm::{LLMAnswer, LLM};
@@ -11,12 +13,10 @@ use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
 use std::collections::HashMap;
-use std::io::Read;
-use std::sync::mpsc::Sender;
 
 #[derive(Clone, Debug)]
 pub struct ChatGPT {
-    client: reqwest::blocking::Client,
+    client: reqwest::Client,
     openai_api_key: String,
     model: String,
     url: String,
@@ -40,7 +40,7 @@ You need to define one wether in the configuration file or as an environment var
         };
 
         Self {
-            client: reqwest::blocking::Client::new(),
+            client: reqwest::Client::new(),
             openai_api_key,
             model: config.model,
             url: config.url,
@@ -48,11 +48,12 @@ You need to define one wether in the configuration file or as an environment var
     }
 }
 
+#[async_trait]
 impl LLM for ChatGPT {
-    fn ask(
+    async fn ask(
         &self,
         chat_messages: Vec<HashMap<String, String>>,
-        sender: &Sender<Event>,
+        sender: UnboundedSender<Event>,
         terminate_response_signal: Arc<AtomicBool>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut headers = HeaderMap::new();
@@ -80,43 +81,46 @@ impl LLM for ChatGPT {
             "stream": true,
         });
 
-        let mut buffer = String::new();
-
         let response = self
             .client
             .post(&self.url)
             .headers(headers)
             .json(&body)
-            .send()?;
+            .send()
+            .await?;
 
         match response.error_for_status() {
             Ok(mut res) => {
-                let _answser = res.read_to_string(&mut buffer)?;
-
-                let re = Regex::new(r"data:\s(.*)").unwrap();
-
                 sender.send(Event::LLMEvent(LLMAnswer::StartAnswer))?;
+                while let Some(chunk) = res.chunk().await? {
+                    let chunk = std::str::from_utf8(&chunk)?;
 
-                for captures in re.captures_iter(&buffer) {
-                    if let Some(data_json) = captures.get(1) {
-                        if terminate_response_signal.load(Ordering::Relaxed) {
-                            sender.send(Event::LLMEvent(LLMAnswer::EndAnswer)).unwrap();
-                            break;
-                        }
-                        if data_json.as_str() == "[DONE]" {
-                            sender.send(Event::LLMEvent(LLMAnswer::EndAnswer)).unwrap();
-                            break;
-                        }
-                        let x: Value = serde_json::from_str(data_json.as_str()).unwrap();
+                    let re = Regex::new(r"data:\s(.*)")?;
 
-                        let msg = x["choices"][0]["delta"]["content"].as_str().unwrap_or("\n");
+                    for captures in re.captures_iter(chunk) {
+                        if let Some(data_json) = captures.get(1) {
+                            if terminate_response_signal.load(Ordering::Relaxed) {
+                                sender.send(Event::LLMEvent(LLMAnswer::EndAnswer))?;
+                                return Ok(());
+                            }
 
-                        if msg != "null" {
-                            sender
-                                .send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))
-                                .unwrap();
+                            if data_json.as_str() == "[DONE]" {
+                                sender.send(Event::LLMEvent(LLMAnswer::EndAnswer))?;
+                                return Ok(());
+                            }
+
+                            let answer: Value = serde_json::from_str(data_json.as_str())?;
+
+                            let msg = answer["choices"][0]["delta"]["content"]
+                                .as_str()
+                                .unwrap_or("\n");
+
+                            if msg != "null" {
+                                sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
+                            }
+
+                            sleep(Duration::from_millis(100)).await;
                         }
-                        thread::sleep(time::Duration::from_millis(100));
                     }
                 }
             }
