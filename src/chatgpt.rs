@@ -20,6 +20,7 @@ pub struct ChatGPT {
     openai_api_key: String,
     model: String,
     url: String,
+    messages: Vec<HashMap<String, String>>,
 }
 
 impl ChatGPT {
@@ -44,15 +45,26 @@ You need to define one wether in the configuration file or as an environment var
             openai_api_key,
             model: config.model,
             url: config.url,
+            messages: Vec::new(),
         }
     }
 }
 
 #[async_trait]
 impl LLM for ChatGPT {
+    fn clear(&mut self) {
+        self.messages = Vec::new();
+    }
+
+    fn append_chat_msg(&mut self, chat: String) {
+        let mut conv: HashMap<String, String> = HashMap::new();
+        conv.insert("role".to_string(), "user".to_string());
+        conv.insert("content".to_string(), chat);
+        self.messages.push(conv);
+    }
+
     async fn ask(
         &self,
-        chat_messages: Vec<HashMap<String, String>>,
         sender: UnboundedSender<Event>,
         terminate_response_signal: Arc<AtomicBool>,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -73,7 +85,7 @@ impl LLM for ChatGPT {
             ])),
         ];
 
-        messages.extend(chat_messages);
+        messages.extend(self.messages.clone());
 
         let body: Value = json!({
             "model": self.model,

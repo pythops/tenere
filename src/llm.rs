@@ -3,7 +3,6 @@ use crate::config::Config;
 use crate::event::Event;
 use async_trait::async_trait;
 use serde::Deserialize;
-use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -13,10 +12,12 @@ use std::sync::Arc;
 pub trait LLM: Send + Sync {
     async fn ask(
         &self,
-        chat_messages: Vec<HashMap<String, String>>,
         sender: UnboundedSender<Event>,
         terminate_response_signal: Arc<AtomicBool>,
     ) -> Result<(), Box<dyn std::error::Error>>;
+
+    fn append_chat_msg(&mut self, chat: String);
+    fn clear(&mut self);
 }
 
 #[derive(Clone, Debug)]
@@ -31,7 +32,7 @@ pub enum LLMBackend {
     ChatGPT,
 }
 
-pub struct LLMModel {}
+pub struct LLMModel;
 
 impl LLMModel {
     pub async fn init(model: &LLMBackend, config: Arc<Config>) -> impl LLM {

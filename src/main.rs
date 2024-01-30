@@ -1,6 +1,5 @@
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
-use std::collections::HashMap;
 use std::{env, io};
 use tenere::app::{App, AppResult};
 use tenere::cli;
@@ -8,12 +7,13 @@ use tenere::config::Config;
 use tenere::event::{Event, EventHandler};
 use tenere::formatter::Formatter;
 use tenere::handler::handle_key_events;
-use tenere::llm::LLMAnswer;
+use tenere::llm::{LLMAnswer, LLM};
 use tenere::tui::Tui;
 
 use tenere::llm::LLMModel;
 
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use clap::crate_version;
 
@@ -28,7 +28,9 @@ async fn main() -> AppResult<()> {
 
     let mut app = App::new(config.clone(), &formatter);
 
-    let llm = Arc::new(LLMModel::init(&config.model, config.clone()).await);
+    let llm = Arc::new(Mutex::new(
+        LLMModel::init(&config.model, config.clone()).await,
+    ));
 
     let backend = CrosstermBackend::new(io::stderr());
     let terminal = Terminal::new(backend)?;
@@ -53,11 +55,10 @@ async fn main() -> AppResult<()> {
             Event::LLMEvent(LLMAnswer::EndAnswer) => {
                 app.chat.handle_answer(LLMAnswer::EndAnswer, &formatter);
 
-                // TODO: factor this into llm struct or trait
-                let mut conv: HashMap<String, String> = HashMap::new();
-                conv.insert("role".to_string(), "user".to_string());
-                conv.insert("content".to_string(), app.chat.answer.plain_answer.clone());
-                app.llm_messages.push(conv);
+                {
+                    let mut llm = llm.lock().await;
+                    llm.append_chat_msg(app.chat.answer.plain_answer.clone());
+                }
 
                 app.terminate_response_signal
                     .store(false, std::sync::atomic::Ordering::Relaxed);

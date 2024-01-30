@@ -2,7 +2,6 @@ use crate::history::History;
 use crate::prompt::Prompt;
 use crate::{chat::Chat, help::Help};
 use std;
-use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 
 use crate::notification::Notification;
@@ -30,7 +29,6 @@ pub struct App<'a> {
     pub prompt: Prompt<'a>,
     pub chat: Chat<'a>,
     pub focused_block: FocusedBlock,
-    pub llm_messages: Vec<HashMap<String, String>>,
     pub history: History<'a>,
     pub notifications: Vec<Notification>,
     pub spinner: Spinner,
@@ -49,7 +47,6 @@ impl<'a> App<'a> {
             prompt: Prompt::default(),
             chat: Chat::new(),
             focused_block: FocusedBlock::Prompt,
-            llm_messages: Vec::new(),
             history: History::new(),
             notifications: Vec::new(),
             spinner: Spinner::default(),
