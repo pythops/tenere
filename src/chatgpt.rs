@@ -8,7 +8,7 @@ use regex::Regex;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::config::ChatGPTConfig;
-use crate::llm::{LLMAnswer, LLM};
+use crate::llm::{LLMAnswer, LLMRole, LLM};
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
@@ -56,10 +56,10 @@ impl LLM for ChatGPT {
         self.messages = Vec::new();
     }
 
-    fn append_chat_msg(&mut self, chat: String) {
+    fn append_chat_msg(&mut self, msg: String, role: LLMRole) {
         let mut conv: HashMap<String, String> = HashMap::new();
-        conv.insert("role".to_string(), "user".to_string());
-        conv.insert("content".to_string(), chat);
+        conv.insert("role".to_string(), role.to_string());
+        conv.insert("content".to_string(), msg);
         self.messages.push(conv);
     }
 

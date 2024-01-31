@@ -4,6 +4,8 @@ use crate::event::Event;
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::sync::atomic::AtomicBool;
+use strum_macros::Display;
+use strum_macros::EnumIter;
 use tokio::sync::mpsc::UnboundedSender;
 
 use std::sync::Arc;
@@ -16,7 +18,7 @@ pub trait LLM: Send + Sync {
         terminate_response_signal: Arc<AtomicBool>,
     ) -> Result<(), Box<dyn std::error::Error>>;
 
-    fn append_chat_msg(&mut self, chat: String);
+    fn append_chat_msg(&mut self, msg: String, role: LLMRole);
     fn clear(&mut self);
 }
 
@@ -27,7 +29,14 @@ pub enum LLMAnswer {
     EndAnswer,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(EnumIter, Display, Debug)]
+#[strum(serialize_all = "lowercase")]
+pub enum LLMRole {
+    ASSISTANT,
+    SYSTEM,
+    USER,
+}
+
 pub enum LLMBackend {
     ChatGPT,
 }
