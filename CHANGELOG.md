@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support for [llama.cpp](https://github.com/ggerganov/llama.cpp)
 - Support for [ollama](https://github.com/ollama/ollama)
 
+### Removed
+
+- Remove borders for chat block
+
 ## [0.10] 27/01/2024
 
 ### Added
