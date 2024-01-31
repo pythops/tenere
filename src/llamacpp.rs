@@ -1,13 +1,12 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use tokio::time::{sleep, Duration};
 
 use crate::event::Event;
 use async_trait::async_trait;
 use regex::Regex;
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::config::ChatGPTConfig;
+use crate::config::LLamacppConfig;
 use crate::llm::{LLMAnswer, LLMRole, LLM};
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
@@ -15,43 +14,31 @@ use std;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
-pub struct ChatGPT {
+pub struct LLamacpp {
     client: reqwest::Client,
-    openai_api_key: String,
-    model: String,
     url: String,
+    api_key: Option<String>,
     messages: Vec<HashMap<String, String>>,
 }
 
-impl ChatGPT {
-    pub fn new(config: ChatGPTConfig) -> Self {
-        let openai_api_key = match std::env::var("OPENAI_API_KEY") {
-            Ok(key) => key,
-            Err(_) => config
-                .openai_api_key
-                .ok_or_else(|| {
-                    eprintln!(
-                        r#"Can not find the openai api key
-You need to define one wether in the configuration file or as an environment variable"#
-                    );
-
-                    std::process::exit(1);
-                })
-                .unwrap(),
+impl LLamacpp {
+    pub fn new(config: LLamacppConfig) -> Self {
+        let api_key = match std::env::var("LLAMACPP_API_KEY") {
+            Ok(key) => Some(key),
+            Err(_) => config.api_key.clone(),
         };
 
         Self {
             client: reqwest::Client::new(),
-            openai_api_key,
-            model: config.model,
             url: config.url,
+            api_key,
             messages: Vec::new(),
         }
     }
 }
 
 #[async_trait]
-impl LLM for ChatGPT {
+impl LLM for LLamacpp {
     fn clear(&mut self) {
         self.messages = Vec::new();
     }
@@ -70,10 +57,10 @@ impl LLM for ChatGPT {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut headers = HeaderMap::new();
         headers.insert("Content-Type", "application/json".parse()?);
-        headers.insert(
-            "Authorization",
-            format!("Bearer {}", self.openai_api_key).parse()?,
-        );
+
+        if let Some(api_key) = &self.api_key {
+            headers.insert("Authorization", format!("Bearer {}", api_key).parse()?);
+        }
 
         let mut messages: Vec<HashMap<String, String>> = vec![
             (HashMap::from([
@@ -88,7 +75,6 @@ impl LLM for ChatGPT {
         messages.extend(self.messages.clone());
 
         let body: Value = json!({
-            "model": self.model,
             "messages": messages,
             "stream": true,
         });
@@ -116,28 +102,26 @@ impl LLM for ChatGPT {
                                 return Ok(());
                             }
 
-                            if data_json.as_str() == "[DONE]" {
+                            let answer: Value = serde_json::from_str(data_json.as_str())?;
+
+                            if answer["choices"]["finish_reason"] == "stop" {
                                 sender.send(Event::LLMEvent(LLMAnswer::EndAnswer))?;
                                 return Ok(());
                             }
-
-                            let answer: Value = serde_json::from_str(data_json.as_str())?;
 
                             let msg = answer["choices"][0]["delta"]["content"]
                                 .as_str()
                                 .unwrap_or("\n");
 
-                            if msg != "null" {
-                                sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
-                            }
-
-                            sleep(Duration::from_millis(100)).await;
+                            sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
                         }
                     }
                 }
             }
             Err(e) => return Err(Box::new(e)),
         }
+
+        sender.send(Event::LLMEvent(LLMAnswer::EndAnswer))?;
 
         Ok(())
     }

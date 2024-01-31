@@ -10,24 +10,25 @@ homepage = "https://github.com/pythops/tenere"
 repository = "https://github.com/pythops/tenere"
 
 [dependencies]
+ansi-to-tui = "3"
+arboard = "3"
+async-trait = "0.1"
+bat = "0.24"
+clap = { version = "4", features = ["derive", "cargo"] }
 crossterm = { version = "0.27", features = ["event-stream"] }
-ratatui = { version = "0.25", features = ["all-widgets"] }
-tui-textarea = { version = "0.4" }
-unicode-width = "0.1"
+dirs = "5"
+futures = "0.3"
 reqwest = { version = "0.11", default-features = false, features = [
   "json",
   "rustls-tls",
 ] }
-serde_json = "1"
-ansi-to-tui = "3"
-
-clap = { version = "4", features = ["derive", "cargo"] }
-toml = { version = "0.8" }
-serde = { version = "1", features = ["derive"] }
-dirs = "5"
+ratatui = { version = "0.25", features = ["all-widgets"] }
 regex = "1"
-bat = "0.24"
-arboard = "3"
-async-trait = "0.1"
-futures = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+strum = "0.26"
+strum_macros = "0.26"
 tokio = { version = "1", features = ["full"] }
+toml = { version = "0.8" }
+tui-textarea = { version = "0.4" }
+unicode-width = "0.1"

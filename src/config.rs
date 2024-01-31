@@ -13,10 +13,12 @@ pub struct Config {
     pub key_bindings: KeyBindings,
 
     #[serde(default = "default_llm_backend")]
-    pub model: LLMBackend,
+    pub llm: LLMBackend,
 
     #[serde(default)]
     pub chatgpt: ChatGPTConfig,
+
+    pub llamacpp: Option<LLamacppConfig>,
 }
 
 pub fn default_archive_file_name() -> String {
@@ -27,6 +29,7 @@ pub fn default_llm_backend() -> LLMBackend {
     LLMBackend::ChatGPT
 }
 
+// ChatGPT
 #[derive(Deserialize, Debug, Clone)]
 pub struct ChatGPTConfig {
     pub openai_api_key: Option<String>,
@@ -56,6 +59,14 @@ impl ChatGPTConfig {
     pub fn default_url() -> String {
         String::from("https://api.openai.com/v1/chat/completions")
     }
+}
+
+// LLamacpp
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct LLamacppConfig {
+    pub url: String,
+    pub api_key: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -119,6 +130,12 @@ impl Config {
 
         let config = std::fs::read_to_string(conf_path).unwrap_or_default();
         let app_config: Config = toml::from_str(&config).unwrap();
+
+        if app_config.llm == LLMBackend::LLamacpp && app_config.llamacpp.is_none() {
+            eprintln!("Config for LLamacpp is not provided");
+            std::process::exit(1)
+        }
+
         app_config
     }
 }

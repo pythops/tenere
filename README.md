@@ -24,7 +24,7 @@
 
 - [x] ChatGPT
 - [ ] ollama (todo)
-- [ ] llama.cpp (todo)
+- [x] llama.cpp (in the `master` branch)
 
 <br>
 
@@ -78,11 +78,11 @@ Tenere can be configured using a TOML configuration file. The file should be loc
 Here are the available general settings:
 
 - `archive_file_name`: the file name where the chat will be saved. By default it is set to `tenere.archive`
-- `model`: the llm model name. Currently only `chatgpt` is supported.
+- `model`: the llm model name. Possible values are: `chatgpt` and `llamacpp`.
 
 ```toml
 archive_file_name = "tenere.archive"
-model = "chatgpt"
+llm  = "chatgpt"
 ```
 
 ### Key bindings
@@ -104,15 +104,17 @@ save_chat = 's'
 
 ## Chatgpt
 
-To use Tenere's chat functionality, you'll need to provide an API key for OpenAI. There are two ways to do this:
+To use `chatgpt` as the backemd, you'll need to provide an API key for OpenAI. There are two ways to do this:
 
-1. Set an environment variable with your API key:
+Set an environment variable with your API key:
 
 ```shell
 export OPENAI_API_KEY="YOUTR KEY HERE"
 ```
 
-2. Include your API key in the configuration file:
+Or
+
+Include your API key in the configuration file:
 
 ```toml
 [chatgpt]
@@ -122,6 +124,33 @@ url = "https://api.openai.com/v1/chat/completions"
 ```
 
 The default model is set to `gpt-3.5-turbo`. Check out the [OpenAI documentation](https://platform.openai.com/docs/models/gpt-3-5) for more info.
+
+## llama.cpp
+
+To use `llama.cpp` as the backemd, you'll need to provide the url that points to the server :
+
+```toml
+[llamacpp]
+url = "http://localhost:8080/v1/chat/completions"
+```
+
+If you configure the server with an api key, then you need to provide it as well:
+
+Setting an environment variable :
+
+```shell
+export LLAMACPP_API_KEY="YOUTR KEY HERE"
+```
+
+Or
+
+Include your API key in the configuration file:
+
+```toml
+[llamacpp]
+url = "http://localhost:8080/v1/chat/completions"
+api_key = "Your API Key here"
+```
 
 <br>
 
@@ -248,3 +277,11 @@ There are 3 modes like vim: `Normal`, `Visual` and `Insert`.
 ## ⚖️ License
 
 AGPLv3
+
+```
+
+```
+
+```
+
+```
