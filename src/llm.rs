@@ -1,6 +1,7 @@
 use crate::chatgpt::ChatGPT;
 use crate::config::Config;
 use crate::event::Event;
+use crate::llamacpp::LLamacpp;
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::sync::atomic::AtomicBool;
@@ -37,16 +38,20 @@ pub enum LLMRole {
     USER,
 }
 
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum LLMBackend {
     ChatGPT,
+    LLamacpp,
 }
 
 pub struct LLMModel;
 
 impl LLMModel {
-    pub async fn init(model: &LLMBackend, config: Arc<Config>) -> impl LLM {
+    pub async fn init(model: &LLMBackend, config: Arc<Config>) -> Box<dyn LLM> {
         match model {
-            LLMBackend::ChatGPT => ChatGPT::new(config.chatgpt.clone()),
+            LLMBackend::ChatGPT => Box::new(ChatGPT::new(config.chatgpt.clone())),
+            LLMBackend::LLamacpp => Box::new(LLamacpp::new(config.llamacpp.clone().unwrap())),
         }
     }
 }

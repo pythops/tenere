@@ -29,3 +29,5 @@ pub mod help;
 pub mod history;
 
 pub mod chat;
+
+pub mod llamacpp;
