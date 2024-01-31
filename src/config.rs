@@ -19,6 +19,8 @@ pub struct Config {
     pub chatgpt: ChatGPTConfig,
 
     pub llamacpp: Option<LLamacppConfig>,
+
+    pub ollama: Option<OllamaConfig>,
 }
 
 pub fn default_archive_file_name() -> String {
@@ -67,6 +69,14 @@ impl ChatGPTConfig {
 pub struct LLamacppConfig {
     pub url: String,
     pub api_key: Option<String>,
+}
+
+// Ollama
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct OllamaConfig {
+    pub url: String,
+    pub model: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -133,6 +143,11 @@ impl Config {
 
         if app_config.llm == LLMBackend::LLamacpp && app_config.llamacpp.is_none() {
             eprintln!("Config for LLamacpp is not provided");
+            std::process::exit(1)
+        }
+
+        if app_config.llm == LLMBackend::Ollama && app_config.ollama.is_none() {
+            eprintln!("Config for Ollama is not provided");
             std::process::exit(1)
         }
 

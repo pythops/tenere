@@ -17,14 +17,15 @@
 - Save chats to files
 - Vim keybinding (most common ops)
 - Copy text from/to clipboard (works only on the prompt)
+- Multiple backends
 
 <br>
 
 ## 💎 Supported LLMs
 
 - [x] ChatGPT
-- [ ] ollama (todo)
 - [x] llama.cpp (in the `master` branch)
+- [x] ollama (in the `master` branch)
 
 <br>
 
@@ -78,7 +79,10 @@ Tenere can be configured using a TOML configuration file. The file should be loc
 Here are the available general settings:
 
 - `archive_file_name`: the file name where the chat will be saved. By default it is set to `tenere.archive`
-- `model`: the llm model name. Possible values are: `chatgpt` and `llamacpp`.
+- `model`: the llm model name. Possible values are:
+  - `chatgpt`
+  - `llamacpp`
+  - `ollama`
 
 ```toml
 archive_file_name = "tenere.archive"
@@ -151,6 +155,20 @@ Include your API key in the configuration file:
 url = "http://localhost:8080/v1/chat/completions"
 api_key = "Your API Key here"
 ```
+
+More infos about llama.cpp api [here](https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md)
+
+## Ollama
+
+To use `ollama` as the backemd, you'll need to provide the url that points to the server with the model name :
+
+```toml
+[ollama]
+url = "http://localhost:11434/api/chat"
+model = "Your model name here"
+```
+
+More infos about ollama api [here](https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion)
 
 <br>
 
@@ -277,11 +295,3 @@ There are 3 modes like vim: `Normal`, `Visual` and `Insert`.
 ## ⚖️ License
 
 AGPLv3
-
-```
-
-```
-
-```
-
-```
