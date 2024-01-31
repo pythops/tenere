@@ -2,13 +2,12 @@ use std::{rc::Rc, sync::atomic::AtomicBool};
 
 use ratatui::{
     layout::Rect,
-    style::Style,
     text::Text,
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    widgets::{Block, Paragraph, Wrap},
     Frame,
 };
 
-use crate::{app::FocusedBlock, formatter::Formatter, llm::LLMAnswer};
+use crate::{formatter::Formatter, llm::LLMAnswer};
 
 #[derive(Debug, Clone, Default)]
 pub struct Answer<'a> {
@@ -25,16 +24,10 @@ pub struct Chat<'a> {
     area_height: u16,
     area_width: u16,
     pub automatic_scroll: Rc<AtomicBool>,
-    pub block: Block<'a>,
 }
 
 impl Default for Chat<'_> {
     fn default() -> Self {
-        let block = Block::default()
-            .border_type(BorderType::default())
-            .borders(Borders::ALL)
-            .style(Style::default());
-
         Self {
             plain_chat: Vec::new(),
             formatted_chat: Text::raw(""),
@@ -43,7 +36,6 @@ impl Default for Chat<'_> {
             area_height: 0,
             area_width: 0,
             automatic_scroll: Rc::new(AtomicBool::new(true)),
-            block,
         }
     }
 }
@@ -100,7 +92,7 @@ impl Chat<'_> {
         self.scroll = 0;
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, focused_block: &FocusedBlock) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect) {
         let mut text = self.formatted_chat.clone();
         text.extend(self.answer.formatted_answer.clone());
 
@@ -123,16 +115,7 @@ impl Chat<'_> {
         let chat = Paragraph::new(text)
             .scroll((scroll, 0))
             .wrap(Wrap { trim: false })
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .style(Style::default())
-                    .border_type(match focused_block {
-                        FocusedBlock::Chat => BorderType::Thick,
-                        _ => BorderType::Rounded,
-                    })
-                    .border_style(Style::default()),
-            );
+            .block(Block::default());
 
         frame.render_widget(chat, area);
     }

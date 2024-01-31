@@ -100,7 +100,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     };
 
     // Chat
-    app.chat.render(frame, chat_block, &app.focused_block);
+    app.chat.render(frame, chat_block);
 
     // Prompt
     app.prompt.render(frame, prompt_block);
