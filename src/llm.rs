@@ -2,6 +2,7 @@ use crate::chatgpt::ChatGPT;
 use crate::config::Config;
 use crate::event::Event;
 use crate::llamacpp::LLamacpp;
+use crate::ollama::Ollama;
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::sync::atomic::AtomicBool;
@@ -43,6 +44,7 @@ pub enum LLMRole {
 pub enum LLMBackend {
     ChatGPT,
     LLamacpp,
+    Ollama,
 }
 
 pub struct LLMModel;
@@ -52,6 +54,7 @@ impl LLMModel {
         match model {
             LLMBackend::ChatGPT => Box::new(ChatGPT::new(config.chatgpt.clone())),
             LLMBackend::LLamacpp => Box::new(LLamacpp::new(config.llamacpp.clone().unwrap())),
+            LLMBackend::Ollama => Box::new(Ollama::new(config.ollama.clone().unwrap())),
         }
     }
 }
