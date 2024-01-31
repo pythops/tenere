@@ -1,4 +1,4 @@
-use crate::llm::LLMAnswer;
+use crate::llm::{LLMAnswer, LLMRole};
 use crate::{chat::Chat, prompt::Mode};
 
 use crate::{
@@ -20,7 +20,7 @@ use tokio::sync::mpsc::UnboundedSender;
 pub async fn handle_key_events(
     key_event: KeyEvent,
     app: &mut App<'_>,
-    llm: Arc<Mutex<impl LLM + 'static>>,
+    llm: Arc<Mutex<Box<dyn LLM + 'static>>>,
     sender: UnboundedSender<Event>,
 ) -> AppResult<()> {
     match key_event.code {
@@ -256,7 +256,7 @@ pub async fn handle_key_events(
                 let llm = llm.clone();
                 {
                     let mut llm = llm.lock().await;
-                    llm.append_chat_msg(user_input.into());
+                    llm.append_chat_msg(user_input.into(), LLMRole::USER);
                 }
 
                 app.spinner.active = true;

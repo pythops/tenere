@@ -7,7 +7,7 @@ use tenere::config::Config;
 use tenere::event::{Event, EventHandler};
 use tenere::formatter::Formatter;
 use tenere::handler::handle_key_events;
-use tenere::llm::{LLMAnswer, LLM};
+use tenere::llm::{LLMAnswer, LLMRole};
 use tenere::tui::Tui;
 
 use tenere::llm::LLMModel;
@@ -29,7 +29,7 @@ async fn main() -> AppResult<()> {
     let mut app = App::new(config.clone(), &formatter);
 
     let llm = Arc::new(Mutex::new(
-        LLMModel::init(&config.model, config.clone()).await,
+        LLMModel::init(&config.llm, config.clone()).await,
     ));
 
     let backend = CrosstermBackend::new(io::stderr());
@@ -53,13 +53,12 @@ async fn main() -> AppResult<()> {
                     .handle_answer(LLMAnswer::Answer(answer), &formatter);
             }
             Event::LLMEvent(LLMAnswer::EndAnswer) => {
-                app.chat.handle_answer(LLMAnswer::EndAnswer, &formatter);
-
                 {
                     let mut llm = llm.lock().await;
-                    llm.append_chat_msg(app.chat.answer.plain_answer.clone());
+                    llm.append_chat_msg(app.chat.answer.plain_answer.clone(), LLMRole::ASSISTANT);
                 }
 
+                app.chat.handle_answer(LLMAnswer::EndAnswer, &formatter);
                 app.terminate_response_signal
                     .store(false, std::sync::atomic::Ordering::Relaxed);
             }
