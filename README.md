@@ -24,7 +24,7 @@
 
 - [x] ChatGPT
 - [ ] ollama (todo)
-- [ ] llama.cpp (todo)
+- [x] llama.cpp (in the `master` branch)
 
 <br>
 
