@@ -23,10 +23,15 @@ pub struct LLamacpp {
 
 impl LLamacpp {
     pub fn new(config: LLamacppConfig) -> Self {
+        let api_key = match std::env::var("LLAMACPP_API_KEY") {
+            Ok(key) => Some(key),
+            Err(_) => config.api_key.clone(),
+        };
+
         Self {
             client: reqwest::Client::new(),
             url: config.url,
-            api_key: config.api_key,
+            api_key,
             messages: Vec::new(),
         }
     }
