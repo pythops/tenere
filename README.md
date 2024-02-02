@@ -6,7 +6,8 @@
 
 ## 📸 Demo
 
-![Demo](https://github.com/pythops/tenere/assets/57548585/66593199-af99-45d5-81b1-01149f3e7464)
+![Demo](https://github.com/pythops/tenere/assets/57548585/b33ed59b-1d94-4bc5-8e61-73e63f41137e)
+
 
 <br>
 
