@@ -8,7 +8,6 @@
 
 ![Demo](https://github.com/pythops/tenere/assets/57548585/b33ed59b-1d94-4bc5-8e61-73e63f41137e)
 
-
 <br>
 
 ## 🪄 Featues
@@ -25,8 +24,8 @@
 ## 💎 Supported LLMs
 
 - [x] ChatGPT
-- [x] llama.cpp (in the `master` branch)
-- [x] ollama (in the `master` branch)
+- [x] llama.cpp
+- [x] ollama
 
 <br>
 
