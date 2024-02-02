@@ -1,7 +1,7 @@
 use ratatui::{
     layout::{Alignment, Constraint, Rect},
     style::{Style, Stylize},
-    widgets::{Block, BorderType, Borders, Clear, Padding, Row, Table, TableState},
+    widgets::{Block, Borders, Clear, Padding, Row, Table, TableState},
     Frame,
 };
 
@@ -93,7 +93,6 @@ impl Help {
                 .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
                 .style(Style::default())
-                .border_type(BorderType::Thick)
                 .border_style(Style::default()),
         );
 

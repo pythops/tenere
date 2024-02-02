@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     text::Text,
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
+    widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
     Frame,
 };
 
@@ -142,10 +142,9 @@ impl History<'_> {
                     })
                     .title_alignment(Alignment::Center)
                     .style(Style::default())
-                    .border_style(Style::default())
-                    .border_type(match focused_block {
-                        FocusedBlock::History => BorderType::Thick,
-                        _ => BorderType::Rounded,
+                    .border_style(match focused_block {
+                        FocusedBlock::History => Style::default().fg(Color::Green),
+                        _ => Style::default(),
                     }),
             )
             .highlight_style(Style::default().bg(Color::DarkGray));
@@ -166,10 +165,9 @@ impl History<'_> {
                 .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
                 .style(Style::default())
-                .border_style(Style::default())
-                .border_type(match focused_block {
-                    FocusedBlock::Preview => BorderType::Thick,
-                    _ => BorderType::Rounded,
+                .border_style(match focused_block {
+                    FocusedBlock::Preview => Style::default().fg(Color::Green),
+                    _ => Style::default(),
                 }),
         );
 
