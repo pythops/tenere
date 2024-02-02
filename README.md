@@ -79,7 +79,7 @@ Tenere can be configured using a TOML configuration file. The file should be loc
 Here are the available general settings:
 
 - `archive_file_name`: the file name where the chat will be saved. By default it is set to `tenere.archive`
-- `model`: the llm model name. Possible values are:
+- `llm`: the llm model name. Possible values are:
   - `chatgpt`
   - `llamacpp`
   - `ollama`
@@ -103,7 +103,8 @@ new_chat = 'n'
 save_chat = 's'
 ```
 
-> [!NOTE]
+ℹ️ Note
+
 > To avoid overlapping with vim key bindings, you need to use `ctrl` + `key` except for help `?`.
 
 ## Chatgpt
