@@ -295,4 +295,4 @@ There are 3 modes like vim: `Normal`, `Visual` and `Insert`.
 
 ## ⚖️ License
 
-AGPLv3
+GPLv3
