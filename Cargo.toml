@@ -22,7 +22,7 @@ reqwest = { version = "0.11", default-features = false, features = [
   "json",
   "rustls-tls",
 ] }
-ratatui = { version = "0.25", features = ["all-widgets"] }
+ratatui = { version = "0.26", features = ["all-widgets"] }
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
