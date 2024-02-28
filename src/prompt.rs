@@ -20,6 +20,7 @@ pub enum Mode {
 }
 
 pub struct Prompt<'a> {
+    cursor_line_style: Style,
     pub mode: Mode,
     pub formatted_prompt: Text<'a>,
     pub editor: TextArea<'a>,
@@ -29,8 +30,10 @@ pub struct Prompt<'a> {
 impl Default for Prompt<'_> {
     fn default() -> Self {
         let mut editor = TextArea::default();
+        let cursor_line_style = Style::default();
         editor.remove_line_number();
-        editor.set_cursor_line_style(Style::default());
+        editor.set_cursor_style(Style::default().bg(Color::White));
+        editor.set_cursor_line_style(cursor_line_style);
         // Visual mode
         editor.set_selection_style(Style::default().bg(Color::DarkGray));
 
@@ -41,6 +44,7 @@ impl Default for Prompt<'_> {
             .style(Color::Green);
 
         Self {
+            cursor_line_style,
             mode: Mode::Normal,
             formatted_prompt: Text::raw(""),
             editor,
@@ -77,19 +81,22 @@ impl Prompt<'_> {
         self.block = Block::default()
             .borders(Borders::ALL)
             .style(Style::default())
-            .border_type(match focused_block {
-                FocusedBlock::Prompt => BorderType::Plain,
-                _ => BorderType::Rounded,
-            })
+            .border_type(BorderType::Plain)
             .border_style(match focused_block {
                 FocusedBlock::Prompt => match self.mode {
                     Mode::Insert => Style::default().fg(Color::LightGreen),
                     Mode::Normal => Style::default().fg(Color::Green),
                     Mode::Visual => Style::default().fg(Color::Yellow),
                 },
-                _ => Style::default(),
+                _ => Style::default().fg(Color::DarkGray),
             });
+
+        match focused_block {
+            FocusedBlock::Prompt => self.editor.set_cursor_style(Style::default().bg(Color::White)),
+            _ => self.editor.set_cursor_style(self.cursor_line_style),
+        } 
     }
+
 
     pub fn handler(
         &mut self,

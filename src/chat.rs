@@ -1,10 +1,7 @@
 use std::{rc::Rc, sync::atomic::AtomicBool};
 
 use ratatui::{
-    layout::Rect,
-    text::Text,
-    widgets::{Block, Paragraph, Wrap},
-    Frame,
+    layout::Rect, style::{Color, Style}, text::Text, widgets::{Block, Borders, Paragraph, Wrap}, Frame
 };
 
 use crate::{formatter::Formatter, llm::LLMAnswer};
@@ -112,10 +109,15 @@ impl Chat<'_> {
             }
         };
 
+        let border_block = Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::DarkGray))
+            .border_type(ratatui::widgets::BorderType::Plain);
+
         let chat = Paragraph::new(text)
             .scroll((scroll, 0))
             .wrap(Wrap { trim: false })
-            .block(Block::default());
+            .block(border_block);
 
         frame.render_widget(chat, area);
     }
