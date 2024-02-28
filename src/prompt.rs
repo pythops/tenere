@@ -31,12 +31,14 @@ impl Default for Prompt<'_> {
         let mut editor = TextArea::default();
         editor.remove_line_number();
         editor.set_cursor_line_style(Style::default());
+        // Visual mode
         editor.set_selection_style(Style::default().bg(Color::DarkGray));
 
+        // Default appearance of the text block. Should appear highlighted.
         let block = Block::default()
-            .border_type(BorderType::Thick)
+            .border_type(BorderType::Plain)
             .borders(Borders::ALL)
-            .style(Style::default());
+            .style(Color::Green);
 
         Self {
             mode: Mode::Normal,
@@ -76,13 +78,13 @@ impl Prompt<'_> {
             .borders(Borders::ALL)
             .style(Style::default())
             .border_type(match focused_block {
-                FocusedBlock::Prompt => BorderType::Thick,
+                FocusedBlock::Prompt => BorderType::Plain,
                 _ => BorderType::Rounded,
             })
             .border_style(match focused_block {
                 FocusedBlock::Prompt => match self.mode {
-                    Mode::Insert => Style::default().fg(Color::Green),
-                    Mode::Normal => Style::default(),
+                    Mode::Insert => Style::default().fg(Color::LightGreen),
+                    Mode::Normal => Style::default().fg(Color::Green),
                     Mode::Visual => Style::default().fg(Color::Yellow),
                 },
                 _ => Style::default(),
