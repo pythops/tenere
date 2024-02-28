@@ -146,7 +146,6 @@ impl Config {
             std::process::exit(1)
         }
 
-
         if app_config.llm == LLMBackend::LLamacpp && app_config.llamacpp.is_none() {
             eprintln!("Config for LLamacpp is not provided");
             std::process::exit(1)

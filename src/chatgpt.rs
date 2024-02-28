@@ -27,7 +27,9 @@ impl ChatGPT {
     pub fn new(config: ChatGPTConfig) -> Self {
         Self {
             client: reqwest::Client::new(),
-            openai_api_key: config.openai_api_key.expect("When using ChatGPT, you must define an `openai_api_key` value."),
+            openai_api_key: config
+                .openai_api_key
+                .expect("When using ChatGPT, you must define an `openai_api_key` value."),
             model: config.model,
             url: config.url,
             messages: Vec::new(),

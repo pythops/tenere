@@ -1,6 +1,3 @@
-use ratatui::backend::CrosstermBackend;
-use ratatui::Terminal;
-use std::{env, io};
 use lazyllm::app::{App, AppResult};
 use lazyllm::cli;
 use lazyllm::config::Config;
@@ -9,6 +6,9 @@ use lazyllm::formatter::Formatter;
 use lazyllm::handler::handle_key_events;
 use lazyllm::llm::{LLMAnswer, LLMRole};
 use lazyllm::tui::Tui;
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
+use std::{env, io};
 
 use lazyllm::llm::LLMModel;
 
