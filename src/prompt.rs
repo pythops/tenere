@@ -21,6 +21,7 @@ pub enum Mode {
 
 pub struct Prompt<'a> {
     cursor_line_style: Style,
+    pub block_title: String,
     pub mode: Mode,
     pub formatted_prompt: Text<'a>,
     pub editor: TextArea<'a>,
@@ -31,20 +32,24 @@ impl Default for Prompt<'_> {
     fn default() -> Self {
         let mut editor = TextArea::default();
         let cursor_line_style = Style::default();
+        let block_title = "Prompt";
+
         editor.remove_line_number();
         editor.set_cursor_style(Style::default().bg(Color::White));
         editor.set_cursor_line_style(cursor_line_style);
         // Visual mode
         editor.set_selection_style(Style::default().bg(Color::DarkGray));
 
-        // Default appearance of the text block. Should appear highlighted.
+        // Default appearance of the text block.
         let block = Block::default()
+            .title(block_title)
             .border_type(BorderType::Plain)
             .borders(Borders::ALL)
             .style(Color::Green);
 
         Self {
             cursor_line_style,
+            block_title: block_title.to_string(),
             mode: Mode::Normal,
             formatted_prompt: Text::raw(""),
             editor,
@@ -79,6 +84,7 @@ impl Prompt<'_> {
 
     pub fn update(&mut self, focused_block: &FocusedBlock) {
         self.block = Block::default()
+            .title(self.block_title.clone())
             .borders(Borders::ALL)
             .style(Style::default())
             .border_type(BorderType::Plain)

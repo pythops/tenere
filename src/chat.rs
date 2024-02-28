@@ -110,6 +110,7 @@ impl Chat<'_> {
         };
 
         let border_block = Block::default()
+            .title("LLM")
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::DarkGray))
             .border_type(ratatui::widgets::BorderType::Plain);

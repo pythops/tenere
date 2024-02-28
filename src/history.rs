@@ -1,7 +1,7 @@
 use tokio::sync::mpsc::UnboundedSender;
 
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     text::Text,
     widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
@@ -135,12 +135,11 @@ impl History<'_> {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title(" History ")
+                    .title("History")
                     .title_style(match focused_block {
                         FocusedBlock::History => Style::default().bold(),
                         _ => Style::default(),
                     })
-                    .title_alignment(Alignment::Center)
                     .style(Style::default())
                     .border_style(match focused_block {
                         FocusedBlock::History => Style::default().fg(Color::Green),
@@ -157,12 +156,11 @@ impl History<'_> {
         .scroll((self.preview.scroll as u16, 0))
         .block(
             Block::default()
-                .title(" Preview ")
+                .title("Preview")
                 .title_style(match focused_block {
                     FocusedBlock::Preview => Style::default().bold(),
                     _ => Style::default(),
                 })
-                .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
                 .style(Style::default())
                 .border_style(match focused_block {
