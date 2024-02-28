@@ -1,14 +1,34 @@
 [package]
-name = "tenere"
-version = "0.1.0"
-authors = ["pythops <contact@pythops.com>"]
-license = "AGPLv3"
+name = "lazyllm"
+version = "0.11.0"
+authors = ["breezykermo <contact@ohrg.org>"]
+license = "GPL-3.0"
 edition = "2021"
+description = "TUI interface for LLMs"
+readme = "README.md"
+homepage = "https://github.com/breezykermo/lazyllm"
+repository = "https://github.com/breezykermo/lazyllm"
 
 [dependencies]
-crossterm = "0.26.1"
-tui = { package = "ratatui", version = "0.20.1" }
-unicode-width = "0.1.7"
-reqwest = { version = "0.11", features = ["json"] }
+ansi-to-tui = "3"
+arboard = "3"
+async-trait = "0.1"
+bat = "0.24"
+clap = { version = "4", features = ["derive", "cargo"] }
+crossterm = { version = "0.27", features = ["event-stream"] }
+dirs = "5"
+futures = "0.3"
+reqwest = { version = "0.11", default-features = false, features = [
+  "json",
+  "rustls-tls",
+] }
+ratatui = { version = "0.26", features = ["all-widgets"] }
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+strum = "0.26"
+strum_macros = "0.26"
 tokio = { version = "1", features = ["full"] }
-serde_json = "1.0"
+toml = { version = "0.8" }
+tui-textarea = { version = "0.4" }
+unicode-width = "0.1"
