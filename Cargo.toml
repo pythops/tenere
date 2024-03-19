@@ -1,6 +1,6 @@
 [package]
 name = "tenere"
-version = "0.11.0"
+version = "0.11.1"
 authors = ["pythops <contact@pythops.com>"]
 license = "GPL-3.0"
 edition = "2021"
@@ -10,7 +10,7 @@ homepage = "https://github.com/pythops/tenere"
 repository = "https://github.com/pythops/tenere"
 
 [dependencies]
-ansi-to-tui = "3"
+ansi-to-tui = "4"
 arboard = "3"
 async-trait = "0.1"
 bat = "0.24"
