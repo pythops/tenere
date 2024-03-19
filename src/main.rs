@@ -2,7 +2,6 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 use std::{env, io};
 use tenere::app::{App, AppResult};
-use tenere::cli;
 use tenere::config::Config;
 use tenere::event::{Event, EventHandler};
 use tenere::formatter::Formatter;
@@ -15,11 +14,13 @@ use tenere::llm::LLMModel;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use clap::crate_version;
+use clap::{crate_version, Command};
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
-    cli::cli().version(crate_version!()).get_matches();
+    Command::new("tenere")
+        .version(crate_version!())
+        .get_matches();
 
     let config = Arc::new(Config::load());
 

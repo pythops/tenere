@@ -8,8 +8,6 @@ pub mod handler;
 
 pub mod chatgpt;
 
-pub mod cli;
-
 pub mod config;
 
 pub mod ui;

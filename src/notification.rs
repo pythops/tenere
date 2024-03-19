@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Alignment, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Text},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
@@ -25,38 +25,71 @@ impl Notification {
         Self {
             message,
             level,
-            ttl: 8,
+            ttl: 4,
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, block: Rect) {
+    pub fn render(&self, index: usize, frame: &mut Frame) {
         let (color, title) = match self.level {
             NotificationLevel::Info => (Color::Green, "Info"),
             NotificationLevel::Warning => (Color::Yellow, "Warning"),
             NotificationLevel::Error => (Color::Red, "Error"),
         };
 
-        let text = Text::from(vec![
-            Line::styled(
-                title,
-                Style::default().fg(color).add_modifier(Modifier::BOLD),
-            )
-            .alignment(Alignment::Center),
-            Line::raw(self.message.as_str()),
+        let mut text = Text::from(vec![
+            Line::from(title).style(Style::new().fg(color).add_modifier(Modifier::BOLD))
         ]);
 
-        let para = Paragraph::new(text)
+        text.extend(Text::from(self.message.as_str()));
+
+        let notification_height = text.height() as u16 + 2;
+        let notification_width = text.width() as u16 + 4;
+
+        let block = Paragraph::new(text)
             .wrap(Wrap { trim: false })
             .alignment(Alignment::Center)
             .block(
                 Block::default()
                     .borders(Borders::ALL)
                     .style(Style::default())
-                    .border_type(BorderType::Rounded)
+                    .border_type(BorderType::Thick)
                     .border_style(Style::default().fg(color)),
             );
 
-        frame.render_widget(Clear, block);
-        frame.render_widget(para, block);
+        let area = notification_rect(
+            index as u16,
+            notification_height,
+            notification_width,
+            frame.size(),
+        );
+
+        frame.render_widget(Clear, area);
+        frame.render_widget(block, area);
     }
+}
+
+pub fn notification_rect(offset: u16, height: u16, width: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Length(height * offset),
+                Constraint::Length(height),
+                Constraint::Min(1),
+            ]
+            .as_ref(),
+        )
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Min(1),
+                Constraint::Length(width),
+                Constraint::Length(2),
+            ]
+            .as_ref(),
+        )
+        .split(popup_layout[1])[1]
 }

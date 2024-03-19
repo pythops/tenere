@@ -8,32 +8,6 @@ use ratatui::{
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub fn notification_rect(offset: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Length(1 + 5 * offset),
-                Constraint::Length(5),
-                Constraint::Min(1),
-            ]
-            .as_ref(),
-        )
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage(74),
-                Constraint::Percentage(25),
-                Constraint::Percentage(1),
-            ]
-            .as_ref(),
-        )
-        .split(popup_layout[1])[1]
-}
-
 pub fn help_rect(r: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -119,8 +93,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     }
 
     // Notifications
-    for (i, notif) in app.notifications.iter_mut().enumerate() {
-        let area = notification_rect(i as u16, frame_size);
-        notif.render(frame, area);
+    for (index, notification) in app.notifications.iter().enumerate() {
+        notification.render(index, frame);
     }
 }
