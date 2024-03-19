@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.11.1] 19/03/2024
+
+### Changed
+
+- Update the license to GPLv3
+- Update the notification layout
+
 ## [0.11] 02/02/2024
 
 ### Added
