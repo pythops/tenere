@@ -109,7 +109,7 @@ save_chat = 's'
 
 ## Chatgpt
 
-To use `chatgpt` as the backemd, you'll need to provide an API key for OpenAI. There are two ways to do this:
+To use `chatgpt` as the backend, you'll need to provide an API key for OpenAI. There are two ways to do this:
 
 Set an environment variable with your API key:
 
@@ -132,7 +132,7 @@ The default model is set to `gpt-3.5-turbo`. Check out the [OpenAI documentation
 
 ## llama.cpp
 
-To use `llama.cpp` as the backemd, you'll need to provide the url that points to the server :
+To use `llama.cpp` as the backend, you'll need to provide the url that points to the server :
 
 ```toml
 [llamacpp]
@@ -161,7 +161,7 @@ More infos about llama.cpp api [here](https://github.com/ggerganov/llama.cpp/blo
 
 ## Ollama
 
-To use `ollama` as the backemd, you'll need to provide the url that points to the server with the model name :
+To use `ollama` as the backend, you'll need to provide the url that points to the server with the model name :
 
 ```toml
 [ollama]
