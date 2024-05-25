@@ -36,7 +36,7 @@ impl Default for Help {
                 ("k or Up", "Scroll up"),
                 ("G", "Go to the end"),
                 ("gg", "Go to the top"),
-                ("?", "show help"),
+                ("?", "Show help"),
             ],
         }
     }
