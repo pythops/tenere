@@ -26,10 +26,7 @@ impl Default for Help {
                     "ctrl + n",
                     "Start new chat and save the previous one to the history",
                 ),
-                (
-                    "ctrl + s",
-                    "Save the chat to file in the current directory",
-                ),
+                ("ctrl + s", "Save the chat to file in the current directory"),
                 ("ctrl + h", "Show history"),
                 ("ctrl + t", "Stop the stream response"),
                 ("j or Down", "Scroll down"),
