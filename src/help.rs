@@ -28,7 +28,7 @@ impl Default for Help {
                 ),
                 (
                     "ctrl + s",
-                    "Save the chat to  file in the current directory",
+                    "Save the chat to file in the current directory",
                 ),
                 ("ctrl + h", "Show history"),
                 ("ctrl + t", "Stop the stream response"),
