@@ -24,6 +24,7 @@ jobs:
     permissions:
       contents: write
     strategy:
+      fast-fail: false
       matrix:
         include:
           - target: aarch64-unknown-linux-gnu
