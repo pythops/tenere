@@ -3,59 +3,58 @@ name: Release
 on:
   push:
     tags:
-      - "*"
+      - v[0-9]+.*
 jobs:
+  body:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Extract release notes
+        uses: ffurrer2/extract-release-notes@v2
+        id: release_notes
+      - name: Upload Body
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.release_notes.outputs.release_notes }}  
+
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
         rust: [stable]
+        include:
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
     permissions:
       contents: write
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@master
-
-      - name: Install just
-        uses: taiki-e/install-action@just
-
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions/checkout@v4
+      - name: Install Target
+        run: rustup target add ${{ matrix.target }}
+      - name: Compile
+        run: cargo build --release --target ${{ matrix.target }} --out-dir ./
+      - name: Zip Binary (windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path tenere.exe -DestinationPath tenere-${{ matrix.target }}.zip
+      - name: Tar Binary (linux)
+        if: runner.os != 'Windows'
+        run: tar -cJf tenere-${{ matrix.target }}.tar.xz tenere
+      - name: Upload Binary
+        uses: softprops/action-gh-release@v2
         with:
-          toolchain: stable
-
-      - name: Setup build env for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt update
-          sudo apt install -y musl-tools gcc
-          rustup target add x86_64-unknown-linux-musl
-
-      - name: Build for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          just build-release-linux
-          cp target/x86_64-unknown-linux-musl/release/tenere tenere-x86_64-linux-musl
-
-      - name: Build for macos
-        if: matrix.os == 'macos-latest'
-        run: |
-          rustup target add aarch64-apple-darwin
-          just build-release-macos
-          cp target/x86_64-apple-darwin/release/tenere tenere-x86_64-macos
-          cp target/aarch64-apple-darwin/release/tenere tenere-aarch64-macos
-
-      - name: Extract release notes
-        if: matrix.os == 'ubuntu-latest'
-        id: release_notes
-        uses: ffurrer2/extract-release-notes@v1
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          body: ${{ steps.release_notes.outputs.release_notes }}
           files: "tenere*"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
