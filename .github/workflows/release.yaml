@@ -47,13 +47,13 @@ jobs:
       - name: Install Target
         run: rustup target add ${{ matrix.target }}
       - name: Compile
-        run: cargo build --release --target ${{ matrix.target }} --out-dir ./
+        run: cargo build --release --target ${{ matrix.target }}
       - name: Zip Binary (windows)
         if: runner.os == 'Windows'
-        run: Compress-Archive -Path tenere.exe -DestinationPath tenere-${{ matrix.target }}.zip
+        run: Compress-Archive -Path ./target/release/tenere.exe -DestinationPath tenere-${{ matrix.target }}.zip
       - name: Tar Binary (linux)
         if: runner.os != 'Windows'
-        run: tar -cJf tenere-${{ matrix.target }}.tar.xz tenere
+        run: tar -cJf tenere-${{ matrix.target }}.tar.xz ./target/release/tenere
       - name: Upload Binary
         uses: softprops/action-gh-release@v2
         with:
