@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use model from the config file if defined
 
-## [0.9] - 2023-01-11
+## [0.9] - 2023-11-01
 
 ### Features
 
