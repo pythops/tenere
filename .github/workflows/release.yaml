@@ -23,8 +23,8 @@ jobs:
   build:
     permissions:
       contents: write
+    continue-on-error: true
     strategy:
-      fast-fail: false
       matrix:
         include:
           - target: aarch64-unknown-linux-gnu
