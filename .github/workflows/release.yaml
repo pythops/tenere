@@ -29,6 +29,8 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
           - target: aarch64-apple-darwin
             os: macos-latest
           - target: x86_64-apple-darwin
@@ -41,16 +43,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Add Musl
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt update
+          sudo apt install -y musl-tools gcc
+      # - name: Install Target
+      #   run: rustup target add ${{ matrix.target }}
       - name: Install Target
-        run: rustup target add ${{ matrix.target }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
       - name: Compile
         run: cargo build --release --target ${{ matrix.target }}
-      - name: Zip Binary (windows)
-        if: runner.os == 'Windows'
-        run: Compress-Archive -Path ./target/${{ matrix.target }}/release/tenere.exe -DestinationPath tenere-${{ matrix.target }}.zip
-      - name: Tar Binary (linux)
-        if: runner.os != 'Windows'
-        run: tar -cJf tenere-${{ matrix.target }}.tar.xz ./target/${{ matrix.target }}/release/tenere
+      # - name: Zip Binary (windows)
+      #   if: runner.os == 'Windows'
+      #   run: Compress-Archive -Path ./target/${{ matrix.target }}/release/tenere.exe -DestinationPath tenere-${{ matrix.target }}.zip
+      # - name: Tar Binary (linux)
+      #   if: runner.os != 'Windows'
+      #   run: tar -cJf tenere-${{ matrix.target }}.tar.xz ./target/${{ matrix.target }}/release/tenere
+      - name: Rename Binary
+        run: mv ./target/${{ matrix.target }}/release/tenere ./tenere-${{ matrix.target }}
       - name: Upload Binary
         uses: softprops/action-gh-release@v2
         with:
