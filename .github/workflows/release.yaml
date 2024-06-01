@@ -23,7 +23,7 @@ jobs:
   build:
     permissions:
       contents: write
-    continue-on-error: true
+    continue-on-error: false
     strategy:
       matrix:
         include:
