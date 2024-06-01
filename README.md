@@ -73,7 +73,8 @@ Tenere can be configured using a TOML configuration file. The file should be loc
 
 - Linux : `$HOME/.config/tenere/config.toml` or `$XDG_CONFIG_HOME/tenere/config.toml`
 - Mac : `$HOME/Library/Application Support/tenere/config.toml`
-- Windows: `~/AppData/Roaming/tenere/config.toml` *(Please create.)*
+- Windows: `~/AppData/Roaming/tenere/config.toml`
+
 
 ### General settings
 
