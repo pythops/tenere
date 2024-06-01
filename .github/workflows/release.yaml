@@ -18,7 +18,7 @@ jobs:
       - name: Upload Body
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ steps.release_notes.outputs.release_notes }}  
+          body: ${{ steps.release_notes.outputs.release_notes }}
 
   build:
     permissions:
@@ -54,6 +54,9 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Compile
         run: cargo build --release --target ${{ matrix.target }}
+      - name: Strip Binary (linux)
+        if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-unknown-linux-musl'
+        run: strip ./target/${{ matrix.target }}/release/tenere
       - name: Rename Binary (unix)
         if: runner.os != 'Windows'
         run: mv ./target/${{ matrix.target }}/release/tenere ./tenere-${{ matrix.target }}
