@@ -61,7 +61,7 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 }
 
 pub fn render(app: &mut App, frame: &mut Frame) {
-    let frame_size = frame.size();
+    let frame_size = frame.area();
 
     let prompt_block_height = app.prompt.height(&frame_size) + 3;
 
@@ -69,7 +69,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(prompt_block_height)].as_ref())
-            .split(frame.size());
+            .split(frame.area());
         (chunks[0], chunks[1])
     };
 

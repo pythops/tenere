@@ -304,6 +304,6 @@ impl Prompt<'_> {
 
     pub fn render(&mut self, frame: &mut Frame, block: Rect) {
         self.editor.set_block(self.block.clone());
-        frame.render_widget(self.editor.widget(), block);
+        frame.render_widget(&self.editor, block);
     }
 }
