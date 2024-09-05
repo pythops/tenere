@@ -5,19 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## [unreleased]
+## [0.11.2] - 2024-09-05
 
 ### Added
 
-* Windows executables to release.
-* Windows config instructions.
-
+- Windows executables to release.
+- Windows config instructions.
 
 ### Changed
 
-* Reworked release github workflow.
+- Reworked release github workflow.
+- Use `stdout` for crossterm instead of `stderr`
 
+### Updated
+
+- Bump ratatui version
 
 ## [0.11.1] - 2024-03-19
 
@@ -122,7 +124,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1] - 2023-04-16
 
 First release 🎉
-
 
 [unreleased]: https://github.com/WyvernIXTL/ubilerntui/compare/v0.11.1...HEAD
 [0.11.1]: https://github.com/pythops/tenere/compare/v0.11...v0.11.1
