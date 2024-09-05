@@ -14,11 +14,12 @@ use tenere::llm::LLMModel;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use clap::{crate_version, Command};
+use clap::{crate_description, crate_version, Command};
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
     Command::new("tenere")
+        .about(crate_description!())
         .version(crate_version!())
         .get_matches();
 
@@ -33,7 +34,7 @@ async fn main() -> AppResult<()> {
         LLMModel::init(&config.llm, config.clone()).await,
     ));
 
-    let backend = CrosstermBackend::new(io::stderr());
+    let backend = CrosstermBackend::new(io::stdout());
     let terminal = Terminal::new(backend)?;
     let events = EventHandler::new(250);
     let mut tui = Tui::new(terminal, events);
