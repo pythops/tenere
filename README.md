@@ -21,7 +21,7 @@
 
 <br>
 
-## 💎 Supported LLMs
+## 💎 Supported Backends
 
 - [x] ChatGPT
 - [x] llama.cpp
@@ -56,15 +56,6 @@ cargo build --release
 
 This will produce an executable file at `target/release/tenere` that you can copy to a directory in your `$PATH`.
 
-### 🍺Brew
-
-On macOS, you can use brew:
-
-```bash
-brew tap pythops/tenere
-brew install tenere
-```
-
 <br>
 
 ## ⚙️ Configuration
@@ -74,7 +65,6 @@ Tenere can be configured using a TOML configuration file. The file should be loc
 - Linux : `$HOME/.config/tenere/config.toml` or `$XDG_CONFIG_HOME/tenere/config.toml`
 - Mac : `$HOME/Library/Application Support/tenere/config.toml`
 - Windows: `~/AppData/Roaming/tenere/config.toml`
-
 
 ### General settings
 
