@@ -1,6 +1,6 @@
 use arboard::Clipboard;
 use ratatui::{
-    layout::Rect,
+    layout::{Margin, Rect},
     style::{Color, Style},
     text::Text,
     widgets::{Block, BorderType, Borders},
@@ -23,7 +23,6 @@ pub struct Prompt<'a> {
     pub mode: Mode,
     pub formatted_prompt: Text<'a>,
     pub editor: TextArea<'a>,
-    pub block: Block<'a>,
 }
 
 impl Default for Prompt<'_> {
@@ -33,16 +32,10 @@ impl Default for Prompt<'_> {
         editor.set_cursor_line_style(Style::default());
         editor.set_selection_style(Style::default().bg(Color::DarkGray));
 
-        let block = Block::default()
-            .border_type(BorderType::Thick)
-            .borders(Borders::ALL)
-            .style(Style::default());
-
         Self {
             mode: Mode::Normal,
             formatted_prompt: Text::raw(""),
             editor,
-            block,
         }
     }
 }
@@ -71,24 +64,6 @@ impl Prompt<'_> {
         std::cmp::min(height, prompt_block_max_height)
     }
 
-    pub fn update(&mut self, focused_block: &FocusedBlock) {
-        self.block = Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
-            .border_type(match focused_block {
-                FocusedBlock::Prompt => BorderType::Thick,
-                _ => BorderType::Rounded,
-            })
-            .border_style(match focused_block {
-                FocusedBlock::Prompt => match self.mode {
-                    Mode::Insert => Style::default().fg(Color::Green),
-                    Mode::Normal => Style::default(),
-                    Mode::Visual => Style::default().fg(Color::Yellow),
-                },
-                _ => Style::default(),
-            });
-    }
-
     pub fn handler(
         &mut self,
         key_event: KeyEvent,
@@ -111,26 +86,21 @@ impl Prompt<'_> {
 
                 KeyCode::Esc => {
                     self.mode = Mode::Normal;
-                    self.update(&FocusedBlock::Prompt);
                 }
                 _ => {}
             },
             Mode::Normal | Mode::Visual => match key_event.code {
                 KeyCode::Char('i') => {
                     self.mode = Mode::Insert;
-                    self.update(&FocusedBlock::Prompt);
                 }
 
                 KeyCode::Esc => {
                     self.mode = Mode::Normal;
-                    self.update(&FocusedBlock::Prompt);
                     self.editor.cancel_selection();
                 }
 
                 KeyCode::Char('v') => {
                     self.mode = Mode::Visual;
-                    self.update(&FocusedBlock::Prompt);
-                    self.update(&FocusedBlock::Prompt);
                     self.editor.start_selection();
                 }
 
@@ -159,7 +129,6 @@ impl Prompt<'_> {
                     KeyCode::Char('c') => {
                         self.editor.delete_next_word();
                         self.mode = Mode::Insert;
-                        self.update(&FocusedBlock::Prompt);
                     }
 
                     _ => self.editor.move_cursor(CursorMove::WordForward),
@@ -172,7 +141,6 @@ impl Prompt<'_> {
                     KeyCode::Char('c') => {
                         self.editor.delete_word();
                         self.mode = Mode::Insert;
-                        self.update(&FocusedBlock::Prompt);
                     }
 
                     _ => self.editor.move_cursor(CursorMove::WordBack),
@@ -185,7 +153,6 @@ impl Prompt<'_> {
                     KeyCode::Char('c') => {
                         self.editor.delete_line_by_end();
                         self.mode = Mode::Insert;
-                        self.update(&FocusedBlock::Prompt);
                     }
                     _ => self.editor.move_cursor(CursorMove::End),
                 },
@@ -197,7 +164,6 @@ impl Prompt<'_> {
                     KeyCode::Char('c') => {
                         self.editor.delete_line_by_head();
                         self.mode = Mode::Insert;
-                        self.update(&FocusedBlock::Prompt);
                     }
                     _ => self.editor.move_cursor(CursorMove::Head),
                 },
@@ -228,14 +194,12 @@ impl Prompt<'_> {
                         self.editor.move_cursor(CursorMove::Head);
                         self.editor.delete_line_by_end();
                         self.mode = Mode::Insert;
-                        self.update(&FocusedBlock::Prompt);
                     }
                 }
 
                 KeyCode::Char('C') => {
                     self.editor.delete_line_by_end();
                     self.mode = Mode::Insert;
-                    self.update(&FocusedBlock::Prompt);
                 }
 
                 KeyCode::Char('x') => {
@@ -245,20 +209,17 @@ impl Prompt<'_> {
                 KeyCode::Char('a') => {
                     self.editor.move_cursor(CursorMove::Forward);
                     self.mode = Mode::Insert;
-                    self.update(&FocusedBlock::Prompt);
                 }
 
                 KeyCode::Char('A') => {
                     self.editor.move_cursor(CursorMove::End);
                     self.mode = Mode::Insert;
-                    self.update(&FocusedBlock::Prompt);
                 }
 
                 KeyCode::Char('o') => {
                     self.editor.move_cursor(CursorMove::End);
                     self.editor.insert_newline();
                     self.mode = Mode::Insert;
-                    self.update(&FocusedBlock::Prompt);
                 }
 
                 KeyCode::Char('O') => {
@@ -266,13 +227,11 @@ impl Prompt<'_> {
                     self.editor.insert_newline();
                     self.editor.move_cursor(CursorMove::Up);
                     self.mode = Mode::Insert;
-                    self.update(&FocusedBlock::Prompt);
                 }
 
                 KeyCode::Char('I') => {
                     self.editor.move_cursor(CursorMove::Head);
                     self.mode = Mode::Insert;
-                    self.update(&FocusedBlock::Prompt);
                 }
 
                 KeyCode::Char('y') => {
@@ -302,8 +261,37 @@ impl Prompt<'_> {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, block: Rect) {
-        self.editor.set_block(self.block.clone());
-        frame.render_widget(&self.editor, block);
+    pub fn render(&mut self, frame: &mut Frame, block: Rect, focused_block: &FocusedBlock) {
+        frame.render_widget(
+            Block::default()
+                .borders(Borders::all())
+                .border_style({
+                    if *focused_block == FocusedBlock::Prompt {
+                        match self.mode {
+                            Mode::Insert => Style::default().fg(Color::Green),
+                            Mode::Normal => Style::default(),
+                            Mode::Visual => Style::default().fg(Color::Yellow),
+                        }
+                    } else {
+                        Style::default()
+                    }
+                })
+                .border_type({
+                    if *focused_block == FocusedBlock::Prompt {
+                        BorderType::Thick
+                    } else {
+                        BorderType::Rounded
+                    }
+                }),
+            block,
+        );
+
+        frame.render_widget(
+            &self.editor,
+            block.inner(Margin {
+                horizontal: 1,
+                vertical: 1,
+            }),
+        );
     }
 }

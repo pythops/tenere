@@ -1,7 +1,7 @@
 use tokio::sync::mpsc::UnboundedSender;
 
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Style, Stylize},
     text::Text,
     widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
@@ -22,7 +22,6 @@ pub struct Preview<'a> {
 
 #[derive(Debug, Default, Clone)]
 pub struct History<'a> {
-    block_height: usize,
     state: ListState,
     pub text: Vec<Vec<String>>,
     pub preview: Preview<'a>,
@@ -31,7 +30,6 @@ pub struct History<'a> {
 impl History<'_> {
     pub fn new() -> Self {
         Self {
-            block_height: 0,
             state: ListState::default(),
             text: Vec::new(),
             preview: Preview::default(),
@@ -106,8 +104,24 @@ impl History<'_> {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, focused_block: FocusedBlock) {
-        self.block_height = area.height as usize;
+    pub fn render(&mut self, frame: &mut Frame, focused_block: &FocusedBlock) {
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Percentage(90),
+                Constraint::Fill(1),
+            ])
+            .split(frame.area())[1];
+
+        let block = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Percentage(90),
+                Constraint::Fill(1),
+            ])
+            .split(layout)[1];
 
         if !self.text.is_empty() && self.state.selected().is_none() {
             *self.state.offset_mut() = 0;
@@ -117,8 +131,8 @@ impl History<'_> {
         let (history_block, preview_block) = {
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-                .split(area);
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+                .split(block);
             (chunks[0], chunks[1])
         };
 
@@ -171,7 +185,7 @@ impl History<'_> {
                 }),
         );
 
-        frame.render_widget(Clear, area);
+        frame.render_widget(Clear, block);
         frame.render_widget(preview, preview_block);
         frame.render_stateful_widget(list, history_block, &mut self.state);
     }

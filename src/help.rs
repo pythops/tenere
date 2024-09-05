@@ -1,39 +1,43 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Rect},
-    style::{Style, Stylize},
-    widgets::{Block, Borders, Clear, Padding, Row, Table, TableState},
+    layout::{Alignment, Constraint, Direction, Layout},
+    style::{Color, Style, Stylize},
+    widgets::{Block, BorderType, Borders, Cell, Clear, Padding, Row, Table},
     Frame,
 };
 
 pub struct Help {
     block_height: usize,
-    state: TableState,
-    keys: &'static [(&'static str, &'static str)],
+    keys: Vec<(Cell<'static>, &'static str)>,
 }
 
 impl Default for Help {
     fn default() -> Self {
-        let mut state = TableState::new().with_offset(0);
-        state.select(Some(0));
-
         Self {
             block_height: 0,
-            state,
-            keys: &[
-                ("Esc", "Switch to Normal mode / Dismiss pop-up"),
-                ("Tab", "Switch the focus"),
+            keys: vec![
                 (
-                    "ctrl + n",
+                    Cell::from("Esc").bold().yellow(),
+                    "Switch to Normal mode / Dismiss pop-up",
+                ),
+                (Cell::from("Tab").bold().yellow(), "Switch the focus"),
+                (
+                    Cell::from("ctrl + n").bold().yellow(),
                     "Start new chat and save the previous one to the history",
                 ),
-                ("ctrl + s", "Save the chat to file in the current directory"),
-                ("ctrl + h", "Show history"),
-                ("ctrl + t", "Stop the stream response"),
-                ("j or Down", "Scroll down"),
-                ("k or Up", "Scroll up"),
-                ("G", "Go to the end"),
-                ("gg", "Go to the top"),
-                ("?", "Show help"),
+                (
+                    Cell::from("ctrl + s").bold().yellow(),
+                    "Save the chat to file in the current directory",
+                ),
+                (Cell::from("ctrl + h").bold().yellow(), "Show history"),
+                (
+                    Cell::from("ctrl + t").bold().yellow(),
+                    "Stop the stream response",
+                ),
+                (Cell::from("j or Down").bold().yellow(), "Scroll down"),
+                (Cell::from("k or Up").bold().yellow(), "Scroll up"),
+                (Cell::from("G").bold().yellow(), "Go to the end"),
+                (Cell::from("gg").bold().yellow(), "Go to the top"),
+                (Cell::from("?").bold().yellow(), "Show help"),
             ],
         }
     }
@@ -44,56 +48,51 @@ impl Help {
         Self::default()
     }
 
-    pub fn scroll_down(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.keys.len().saturating_sub(self.block_height - 6) {
-                    i
-                } else {
-                    i + 1
-                }
-            }
-            None => 1,
-        };
-        *self.state.offset_mut() = i;
-        self.state.select(Some(i));
-    }
-    pub fn scroll_up(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i > 1 {
-                    i - 1
-                } else {
-                    0
-                }
-            }
-            None => 1,
-        };
-        *self.state.offset_mut() = i;
-        self.state.select(Some(i));
-    }
+    pub fn render(&mut self, frame: &mut Frame) {
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(15),
+                Constraint::Fill(1),
+            ])
+            .flex(ratatui::layout::Flex::SpaceBetween)
+            .split(frame.area());
 
-    pub fn render(&mut self, frame: &mut Frame, block: Rect) {
+        let block = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Min(75),
+                Constraint::Fill(1),
+            ])
+            .flex(ratatui::layout::Flex::SpaceBetween)
+            .split(layout[1])[1];
+
         self.block_height = block.height as usize;
-        let widths = [Constraint::Length(15), Constraint::Min(60)];
+        let widths = [Constraint::Length(12), Constraint::Fill(1)];
         let rows: Vec<Row> = self
             .keys
             .iter()
-            .map(|key| Row::new(vec![key.0, key.1]))
+            .map(|key| {
+                Row::new(vec![key.0.to_owned(), key.1.into()])
+                    .style(Style::default().fg(Color::White))
+            })
             .collect();
 
         let table = Table::new(rows, widths).block(
             Block::default()
-                .padding(Padding::uniform(2))
+                .padding(Padding::uniform(1))
                 .title(" Help ")
-                .title_style(Style::default().bold())
+                .title_style(Style::default().bold().fg(Color::Green))
                 .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
                 .style(Style::default())
-                .border_style(Style::default()),
+                .border_type(BorderType::Thick)
+                .border_style(Style::default().fg(Color::Green)),
         );
 
         frame.render_widget(Clear, block);
-        frame.render_stateful_widget(table, block, &mut self.state);
+        frame.render_widget(table, block);
     }
 }

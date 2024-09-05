@@ -55,9 +55,6 @@ pub async fn handle_key_events(
             FocusedBlock::Preview => {
                 app.history.preview.scroll = app.history.preview.scroll.saturating_add(1);
             }
-            FocusedBlock::Help => {
-                app.help.scroll_down();
-            }
             _ => (),
         },
 
@@ -74,10 +71,6 @@ pub async fn handle_key_events(
                     .automatic_scroll
                     .store(false, std::sync::atomic::Ordering::Relaxed);
                 app.chat.scroll = app.chat.scroll.saturating_sub(1);
-            }
-
-            FocusedBlock::Help => {
-                app.help.scroll_up();
             }
 
             _ => (),
@@ -172,20 +165,16 @@ pub async fn handle_key_events(
                 app.chat
                     .automatic_scroll
                     .store(true, std::sync::atomic::Ordering::Relaxed);
-
-                app.prompt.update(&app.focused_block);
             }
             FocusedBlock::Prompt => {
                 app.chat.move_to_bottom();
 
                 app.focused_block = FocusedBlock::Chat;
                 app.prompt.mode = Mode::Normal;
-                app.prompt.update(&app.focused_block);
             }
             FocusedBlock::History => {
                 app.focused_block = FocusedBlock::Preview;
                 app.history.preview.scroll = 0;
-                app.prompt.update(&app.focused_block);
             }
             FocusedBlock::Preview => {
                 app.focused_block = FocusedBlock::History;
@@ -199,7 +188,6 @@ pub async fn handle_key_events(
             if c == app.config.key_bindings.show_help && app.prompt.mode != Mode::Insert =>
         {
             app.focused_block = FocusedBlock::Help;
-            app.prompt.update(&app.focused_block);
             app.chat
                 .automatic_scroll
                 .store(true, std::sync::atomic::Ordering::Relaxed);
@@ -212,7 +200,6 @@ pub async fn handle_key_events(
                 && key_event.modifiers == KeyModifiers::CONTROL =>
         {
             app.focused_block = FocusedBlock::History;
-            app.prompt.update(&app.focused_block);
             app.chat
                 .automatic_scroll
                 .store(true, std::sync::atomic::Ordering::Relaxed);
