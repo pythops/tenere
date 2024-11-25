@@ -104,10 +104,10 @@ impl LLM for ChatGPT {
         match response.error_for_status() {
             Ok(mut res) => {
                 sender.send(Event::LLMEvent(LLMAnswer::StartAnswer))?;
+                let re = Regex::new(r"data:\s(.*)")?;
+
                 while let Some(chunk) = res.chunk().await? {
                     let chunk = std::str::from_utf8(&chunk)?;
-
-                    let re = Regex::new(r"data:\s(.*)")?;
 
                     for captures in re.captures_iter(chunk) {
                         if let Some(data_json) = captures.get(1) {

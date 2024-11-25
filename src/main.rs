@@ -14,7 +14,7 @@ use tenere::llm::LLMModel;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use clap::{crate_description, crate_version, Command, Arg};
+use clap::{crate_description, crate_version, Arg, Command};
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
@@ -23,10 +23,10 @@ async fn main() -> AppResult<()> {
         .version(crate_version!())
         .arg(
             Arg::new("config")
-            .short('c')
-            .long("config")
-            .help("Path to custom config file")
-            .value_name("FILE")
+                .short('c')
+                .long("config")
+                .help("Path to custom config file")
+                .value_name("FILE"),
         )
         .get_matches();
 
