@@ -1,6 +1,6 @@
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
-use std::{env, io};
+use std::{env, io, path::PathBuf};
 use tenere::app::{App, AppResult};
 use tenere::config::Config;
 use tenere::event::{Event, EventHandler};
@@ -14,16 +14,24 @@ use tenere::llm::LLMModel;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use clap::{crate_description, crate_version, Command};
+use clap::{crate_description, crate_version, Command, Arg};
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
-    Command::new("tenere")
+    let matches = Command::new("tenere")
         .about(crate_description!())
         .version(crate_version!())
+        .arg(
+            Arg::new("config")
+            .short('c')
+            .long("config")
+            .help("Path to custom config file")
+            .value_name("FILE")
+        )
         .get_matches();
 
-    let config = Arc::new(Config::load());
+    let config_path = matches.get_one::<String>("config").map(PathBuf::from);
+    let config = Arc::new(Config::load(config_path));
 
     let (formatter_config, formatter_assets) = Formatter::init();
     let formatter = Formatter::new(&formatter_config, &formatter_assets);
