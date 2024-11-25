@@ -3,6 +3,7 @@ use toml;
 
 use dirs;
 use serde::Deserialize;
+use std::path::PathBuf;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -132,11 +133,15 @@ impl KeyBindings {
 }
 
 impl Config {
-    pub fn load() -> Self {
-        let conf_path = dirs::config_dir()
-            .unwrap()
-            .join("tenere")
-            .join("config.toml");
+    pub fn load(custom_path: Option<PathBuf>) -> Self {
+        let conf_path = if let Some(path) = custom_path {
+            path
+        } else {
+            dirs::config_dir()
+                .unwrap()
+                .join("tenere")
+                .join("config.toml")
+        };
 
         let config = std::fs::read_to_string(conf_path).unwrap_or_default();
         let app_config: Config = toml::from_str(&config).unwrap();
