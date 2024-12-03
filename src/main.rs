@@ -48,6 +48,12 @@ async fn main() -> AppResult<()> {
     let mut tui = Tui::new(terminal, events);
     tui.init()?;
 
+    // load potential history data from archive file
+    app.history.load(
+        app.config.archive_file_name.as_str(),
+        tui.events.sender.clone(),
+    );
+
     while app.running {
         tui.draw(&mut app)?;
         match tui.events.next().await? {
