@@ -18,6 +18,7 @@
 - Vim keybinding (most common ops)
 - Copy text from/to clipboard (works only on the prompt)
 - Multiple backends
+- Automatically load the last saved chat into history
 
 <br>
 

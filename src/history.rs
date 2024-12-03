@@ -1,3 +1,5 @@
+use core::str;
+
 use tokio::sync::mpsc::UnboundedSender;
 
 use ratatui::{
@@ -79,6 +81,24 @@ impl History<'_> {
             None => 0,
         };
         self.state.select(Some(i));
+    }
+
+    /// Add to history the archive file if exists
+    pub fn load(&mut self, archive_file_name: &str, sender: UnboundedSender<Event>) {
+        if let Ok(text) = std::fs::read_to_string(archive_file_name) {
+            // push full conversation in preview
+            self.preview.text.push(Text::from(text.clone()));
+            // get first line of the conversation
+            let first_line: String = text.lines().next().unwrap_or("").to_string();
+            self.text.push(vec![first_line]);
+
+            let notif = Notification::new(
+                format!("Chat loaded in history from `{}` file", archive_file_name),
+                NotificationLevel::Info,
+            );
+
+            sender.send(Event::Notification(notif)).unwrap();
+        }
     }
 
     pub fn save(&mut self, archive_file_name: &str, sender: UnboundedSender<Event>) {
