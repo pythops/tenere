@@ -60,11 +60,25 @@ This will produce an executable file at `target/release/tenere` that you can cop
 
 ## ⚙️ Configuration
 
-Tenere can be configured using a TOML configuration file. The file should be located in :
+Tenere can be configured using a TOML configuration file. By default, the configuration file is located at:
 
-- Linux : `$HOME/.config/tenere/config.toml` or `$XDG_CONFIG_HOME/tenere/config.toml`
-- Mac : `$HOME/Library/Application Support/tenere/config.toml`
-- Windows: `~/AppData/Roaming/tenere/config.toml`
+- **Linux**: `$HOME/.config/tenere/config.toml` or `$XDG_CONFIG_HOME/tenere/config.toml`
+- **Mac**: `$HOME/Library/Application Support/tenere/config.toml`
+- **Windows**: `~/AppData/Roaming/tenere/config.toml`
+
+### 🛠 Custom Configuration Path
+
+You can optionally specify a custom path for the configuration file using the `-c` flag. This allows you to override the default configuration file location.
+
+### Example Usage
+
+```sh
+# Use the default configuration path
+tenere
+
+# Specify a custom configuration path
+tenere -c ~/path/to/custom/config.toml
+```
 
 ### General settings
 
