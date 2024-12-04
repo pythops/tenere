@@ -11,7 +11,6 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use ratatui::text::Line;
 
-use crate::notification::{Notification, NotificationLevel};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -111,6 +110,8 @@ pub async fn handle_key_events(
                 .push(app.chat.formatted_chat.clone());
 
             app.history.text.push(app.chat.plain_chat.clone());
+            // after adding to history, save the chat in file
+            app.history.save(app.history.text.len() - 1, sender.clone());
 
             app.chat = Chat::default();
 
@@ -121,40 +122,6 @@ pub async fn handle_key_events(
             }
 
             app.chat.scroll = 0;
-        }
-
-        // Save chat
-        KeyCode::Char(c)
-            if c == app.config.key_bindings.save_chat
-                && key_event.modifiers == KeyModifiers::CONTROL =>
-        {
-            match app.focused_block {
-                FocusedBlock::History | FocusedBlock::Preview => {
-                    app.history
-                        .save(app.config.archive_file_name.as_str(), sender.clone());
-                }
-                FocusedBlock::Chat | FocusedBlock::Prompt => {
-                    match std::fs::write(
-                        app.config.archive_file_name.clone(),
-                        app.chat.plain_chat.join(""),
-                    ) {
-                        Ok(_) => {
-                            let notif = Notification::new(
-                                format!("Chat saved to `{}` file", app.config.archive_file_name),
-                                NotificationLevel::Info,
-                            );
-
-                            sender.send(Event::Notification(notif)).unwrap();
-                        }
-                        Err(e) => {
-                            let notif = Notification::new(e.to_string(), NotificationLevel::Error);
-
-                            sender.send(Event::Notification(notif)).unwrap();
-                        }
-                    }
-                }
-                _ => (),
-            }
         }
 
         // Switch the focus
