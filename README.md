@@ -85,14 +85,12 @@ tenere -c ~/path/to/custom/config.toml
 
 Here are the available general settings:
 
-- `archive_file_name`: the file name where the chat will be saved. By default it is set to `tenere.archive`
 - `llm`: the llm model name. Possible values are:
   - `chatgpt`
   - `llamacpp`
   - `ollama`
 
 ```toml
-archive_file_name = "tenere.archive"
 llm  = "chatgpt"
 ```
 
@@ -107,7 +105,6 @@ Here is an example with the default key bindings
 show_help = '?'
 show_history = 'h'
 new_chat = 'n'
-save_chat = 's'
 ```
 
 ℹ️ Note
@@ -186,9 +183,7 @@ More infos about ollama api [here](https://github.com/ollama/ollama/blob/main/do
 
 These are the default key bindings regardless of the focused block.
 
-`ctrl + n`: Start a new chat and save the previous one in history.
-
-`ctrl + s`: Save the current chat or chat history (history pop-up should be visible first) to `tenere.archive` file in the current directory.
+`ctrl + n`: Start a new chat and save the previous one in history and save it to `tenere.archive-i` file in `data directory`.
 
 `Tab`: Switch the focus.
 
