@@ -24,10 +24,6 @@ impl Default for Help {
                     Cell::from("ctrl + n").bold().yellow(),
                     "Start new chat and save the previous one to the history",
                 ),
-                (
-                    Cell::from("ctrl + s").bold().yellow(),
-                    "Save the chat to file in the current directory",
-                ),
                 (Cell::from("ctrl + h").bold().yellow(), "Show history"),
                 (
                     Cell::from("ctrl + t").bold().yellow(),

@@ -110,13 +110,7 @@ impl History<'_> {
                 }
             }
 
-            let notif = Notification::new(
-                format!(
-                    "Chat loaded in history from `{:?}` files",
-                    directory_path.display()
-                ),
-                NotificationLevel::Info,
-            );
+            let notif = Notification::new("History loaded".to_string(), NotificationLevel::Info);
 
             sender.send(Event::Notification(notif)).unwrap();
         }
@@ -142,10 +136,8 @@ impl History<'_> {
         if !self.text.is_empty() {
             match std::fs::write(file_path.clone(), self.text[chat_index_in_history].join("")) {
                 Ok(_) => {
-                    let notif = Notification::new(
-                        format!("Chat saved to `{}` file", file_path.display()),
-                        NotificationLevel::Info,
-                    );
+                    let notif =
+                        Notification::new("Chat saved".to_string(), NotificationLevel::Info);
 
                     sender.send(Event::Notification(notif)).unwrap();
                 }
