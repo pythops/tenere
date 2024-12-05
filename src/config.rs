@@ -7,9 +7,6 @@ use std::path::PathBuf;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    #[serde(default = "default_archive_file_name")]
-    pub archive_file_name: String,
-
     #[serde(default)]
     pub key_bindings: KeyBindings,
 
@@ -22,10 +19,6 @@ pub struct Config {
     pub llamacpp: Option<LLamacppConfig>,
 
     pub ollama: Option<OllamaConfig>,
-}
-
-pub fn default_archive_file_name() -> String {
-    String::from("tenere.archive")
 }
 
 pub fn default_llm_backend() -> LLMBackend {
@@ -91,9 +84,6 @@ pub struct KeyBindings {
     #[serde(default = "KeyBindings::default_new_chat")]
     pub new_chat: char,
 
-    #[serde(default = "KeyBindings::default_save_chat")]
-    pub save_chat: char,
-
     #[serde(default = "KeyBindings::default_stop_stream")]
     pub stop_stream: char,
 }
@@ -104,7 +94,6 @@ impl Default for KeyBindings {
             show_help: '?',
             show_history: 'h',
             new_chat: 'n',
-            save_chat: 's',
             stop_stream: 't',
         }
     }
@@ -121,10 +110,6 @@ impl KeyBindings {
 
     fn default_new_chat() -> char {
         'n'
-    }
-
-    fn default_save_chat() -> char {
-        's'
     }
 
     fn default_stop_stream() -> char {

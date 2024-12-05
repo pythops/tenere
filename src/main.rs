@@ -48,6 +48,13 @@ async fn main() -> AppResult<()> {
     let mut tui = Tui::new(terminal, events);
     tui.init()?;
 
+    // create data directory if not exists
+    app.history
+        .check_data_directory_exists(tui.events.sender.clone());
+
+    // load potential history data from archive files
+    app.history.load_history(tui.events.sender.clone());
+
     while app.running {
         tui.draw(&mut app)?;
         match tui.events.next().await? {
