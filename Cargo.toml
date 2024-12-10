@@ -2,7 +2,7 @@
 name = "tenere"
 version = "0.11.2"
 authors = ["Badr Badri <contact@pythops.com>"]
-license = "GPL-3.0"
+license = "GPL-3.0-or-later"
 edition = "2021"
 description = "TUI interface for LLMs written in Rust"
 readme = "README.md"
