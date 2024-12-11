@@ -44,6 +44,16 @@ You can download the pre-built binaries from the [release page](https://github.c
 cargo install tenere
 ```
 
+### ❄️ NixOS / Nix
+
+Tenere is available in nixpkgs and can be installed via configuration.nix:
+
+```nix
+environment.systemPackages = with pkgs; [
+  tenere
+];
+```
+
 ### ⚒️ Build from source
 
 To build from the source, you need [Rust](https://www.rust-lang.org/) compiler and
