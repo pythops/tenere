@@ -297,4 +297,4 @@ There are 3 modes like vim: `Normal`, `Visual` and `Insert`.
 
 ## ⚖️ License
 
-SPDX-License-Identifier: GPL-3.0-or-later
+GNU General Public License v3.0 or later
