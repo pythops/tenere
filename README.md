@@ -4,6 +4,10 @@
   <h2> TUI interface for LLMs written in Rust </h2>
 </div>
 
+<a href="https://repology.org/project/tenere/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/tenere.svg" alt="Packaging status" align="right">
+</a>
+
 ## 📸 Demo
 
 ![Demo](https://github.com/pythops/tenere/assets/57548585/b33ed59b-1d94-4bc5-8e61-73e63f41137e)
