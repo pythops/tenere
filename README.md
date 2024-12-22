@@ -68,6 +68,12 @@ For non-NixOS systems, install directly with:
 nix-env -iA nixpkgs.tenere
 ```
 
+### 🍺 Homebrew
+
+```
+brew install tenere
+```
+
 ### ⚒️ Build from source
 
 To build from the source, you need [Rust](https://www.rust-lang.org/) compiler and
