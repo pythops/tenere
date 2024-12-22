@@ -36,6 +36,12 @@
     <img src="https://repology.org/badge/vertical-allrepos/tenere.svg" alt="Packaging status" align="left">
 </a>
 
+<br>
+<br>
+<br>
+<br>
+<br>
+
 ### 📥 Binary releases
 
 You can download the pre-built binaries from the [release page](https://github.com/pythops/tenere/releases)
