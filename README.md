@@ -32,6 +32,10 @@
 
 ## 🚀 Installation
 
+<a href="https://repology.org/project/tenere/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/tenere.svg" alt="Packaging status" align="left">
+</a>
+
 ### 📥 Binary releases
 
 You can download the pre-built binaries from the [release page](https://github.com/pythops/tenere/releases)
