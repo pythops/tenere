@@ -68,6 +68,17 @@ For non-NixOS systems, install directly with:
 nix-env -iA nixpkgs.tenere
 ```
 
+### 📱 Mobile (nix-on-droid)
+
+Tenere works on Android via nix-on-droid ([demo](https://github.com/user-attachments/assets/c06e5650-0b5d-4f0a-816d-a2c1bd88774a)).
+
+To set up ([tutorial](https://www.youtube.com/watch?v=XiVz2UR9epE)):
+
+1. Install nix-on-droid from F-Droid
+2. Add tenere to your packages in ".config/nixpkgs/nix-on-droid.nix":
+3. Run ``nix-on-droid switch``
+4. Create your config at ".config/tenere/config.toml"
+
 ### 🍺 Homebrew
 
 ```
