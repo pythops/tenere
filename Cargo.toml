@@ -13,7 +13,7 @@ repository = "https://github.com/pythops/tenere"
 ansi-to-tui = "7"
 arboard = "3"
 async-trait = "0.1"
-bat = "0.24"
+bat = "0.25"
 clap = { version = "4", features = ["derive", "cargo"] }
 crossterm = { version = "0.28", features = ["event-stream"] }
 dirs = "5"
