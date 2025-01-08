@@ -10,7 +10,7 @@
 
 <br>
 
-## 🪄 Featues
+## 🪄 Features
 
 - Syntax highlights
 - Chat history
