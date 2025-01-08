@@ -79,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 
 - display a spinner in the waiting message
-- chatgpt url is configureable
+- chatgpt url is configurable
 
 ## [0.5] - 2023-04-22
 

@@ -32,7 +32,7 @@ impl ChatGPT {
                 .ok_or_else(|| {
                     eprintln!(
                         r#"Can not find the openai api key
-You need to define one wether in the configuration file or as an environment variable"#
+You need to define one whether in the configuration file or as an environment variable"#
                     );
 
                     std::process::exit(1);
