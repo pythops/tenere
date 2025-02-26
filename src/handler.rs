@@ -301,6 +301,7 @@ pub async fn handle_key_events(
 }
 
 /// Load a voice file from the configured directory and update the config
+/// Cycles through available voices each time it's called
 async fn load_voice_file(
     sender: UnboundedSender<Event>, 
     config: Arc<Config>
@@ -331,8 +332,33 @@ async fn load_voice_file(
         return Err(format!("No voice files found in {:?}. Place audio files in this directory.", voice_dir).into());
     }
     
-    // For simplicity, use the first voice file
-    let voice_path = &voice_files[0];
+    // Sort the files to ensure consistent order
+    voice_files.sort();
+    
+    // Get the last used voice file index
+    let last_index_file = dirs::config_dir().unwrap().join("tenere").join("last_voice_index");
+    let last_index = if last_index_file.exists() {
+        match tokio::fs::read_to_string(&last_index_file).await {
+            Ok(content) => content.trim().parse::<usize>().unwrap_or(0),
+            Err(_) => 0
+        }
+    } else {
+        0
+    };
+    
+    // Calculate the next index (cycling through the list)
+    let next_index = (last_index + 1) % voice_files.len();
+    
+    // Save the next index for future calls
+    if let Some(parent) = last_index_file.parent() {
+        if !parent.exists() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+    }
+    tokio::fs::write(&last_index_file, next_index.to_string()).await?;
+    
+    // Get the selected voice file
+    let voice_path = &voice_files[next_index];
     let file_name = voice_path.file_name().unwrap().to_string_lossy().to_string();
     
     // Check if we have a cached voice ID for this file to avoid re-uploading
@@ -350,7 +376,8 @@ async fn load_voice_file(
                         // Send notification that we're using cached voice
                         sender.send(Event::Notification(
                             Notification::new(
-                                format!("Using cached voice: {}", file_name),
+                                format!("Using voice: {} ({}/{})", 
+                                    file_name, next_index + 1, voice_files.len()),
                                 NotificationLevel::Info
                             )
                         ))?;
@@ -366,6 +393,15 @@ async fn load_voice_file(
     } else {
         // Upload the voice file and get the voice ID
         let id = tts::upload_voice_file(voice_path, &config.tts).await?;
+        
+        // Send notification that we're uploading a new voice
+        sender.send(Event::Notification(
+            Notification::new(
+                format!("Uploading new voice: {} ({}/{})", 
+                    file_name, next_index + 1, voice_files.len()),
+                NotificationLevel::Info
+            )
+        ))?;
         
         // Cache the voice ID
         let mut cache_map = if cache_file.exists() {
