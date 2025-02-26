@@ -131,7 +131,7 @@ impl LLM for ChatGPT {
                                 sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
                             }
 
-                            sleep(Duration::from_millis(100)).await;
+                            sleep(Duration::from_millis(1)).await;
                         }
                     }
                 }
