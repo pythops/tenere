@@ -361,70 +361,117 @@ async fn load_voice_file(
     let voice_path = &voice_files[next_index];
     let file_name = voice_path.file_name().unwrap().to_string_lossy().to_string();
     
+    // Create a more reliable cache key using file name and file size
+    let file_metadata = tokio::fs::metadata(voice_path).await?;
+    let file_size = file_metadata.len();
+    let cache_key = format!("{}_size_{}", file_name, file_size);
+    
+    // Debug the voice file selection
+    // eprintln!("Selected voice file: {} (size: {} bytes)", file_name, file_size);
+    
     // Check if we have a cached voice ID for this file to avoid re-uploading
     let cache_file = dirs::config_dir().unwrap().join("tenere").join("voice_cache.json");
     let mut voice_id = None;
     
     // Try to get the voice ID from cache first
     if cache_file.exists() {
-        if let Ok(content) = tokio::fs::read_to_string(&cache_file).await {
-            if let Ok(cache_map) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&content) {
-                if let Some(id) = cache_map.get(&file_name) {
-                    if let Some(id_str) = id.as_str() {
-                        voice_id = Some(id_str.to_string());
-                        
-                        // Send notification that we're using cached voice
-                        sender.send(Event::Notification(
-                            Notification::new(
-                                format!("Using voice: {} ({}/{})", 
-                                    file_name, next_index + 1, voice_files.len()),
-                                NotificationLevel::Info
-                            )
-                        ))?;
+        // eprintln!("Voice cache file exists at: {:?}", cache_file);
+        
+        match tokio::fs::read_to_string(&cache_file).await {
+            Ok(content) => {
+                // eprintln!("Read cache content: {} bytes", content.len());
+                // Parse as JSON map directly - more robust error handling
+                match serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&content) {
+                    Ok(cache_map) => {
+                        // First try with the cache_key
+                        if let Some(id) = cache_map.get(&cache_key).and_then(|v| v.as_str()) {
+                            voice_id = Some(id.to_string());
+                            // eprintln!("Found voice ID in cache with key {}: {}", cache_key, id);
+                        } 
+                        // Fallback to just the filename
+                        else if let Some(id) = cache_map.get(&file_name).and_then(|v| v.as_str()) {
+                            voice_id = Some(id.to_string());
+                            // eprintln!("Found voice ID in cache with filename {}: {}", file_name, id);
+                        } else {
+                            // eprintln!("No cache entry found for {} or {}", cache_key, file_name);
+                        }
+                    },
+                    Err(e) => {
+                        // eprintln!("Failed to parse voice cache: {}", e);
                     }
                 }
+            },
+            Err(e) => {
+                // eprintln!("Failed to read voice cache file: {}", e);
             }
         }
+    } else {
+        // eprintln!("Voice cache file doesn't exist yet at: {:?}", cache_file);
     }
     
     // If not found in cache, upload the file
     let voice_id = if let Some(id) = voice_id {
-        id
-    } else {
-        // Upload the voice file and get the voice ID
-        let id = tts::upload_voice_file(voice_path, &config.tts).await?;
-        
-        // Send notification that we're uploading a new voice
+        // Voice found in cache, notify the user
         sender.send(Event::Notification(
             Notification::new(
-                format!("Uploading new voice: {} ({}/{})", 
+                format!("Using voice: {} ({}/{})", 
                     file_name, next_index + 1, voice_files.len()),
                 NotificationLevel::Info
             )
         ))?;
+        id
+    } else {
+        // Voice not found in cache, upload it
+        // eprintln!("No cached voice found, uploading file: {}", file_name);
         
-        // Cache the voice ID
+        // Upload the voice file and get the voice ID
+        let id = tts::upload_voice_file(voice_path, &config.tts).await?;
+        // eprintln!("Voice uploaded successfully with ID: {}", id);
+        
+        // Create the cache map
         let mut cache_map = if cache_file.exists() {
             match tokio::fs::read_to_string(&cache_file).await {
-                Ok(content) => serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&content)
-                    .unwrap_or_default(),
+                Ok(content) => match serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&content) {
+                    Ok(map) => map,
+                    Err(_) => {
+                        // If parsing fails, create a fresh map
+                        // eprintln!("Cache file exists but couldn't be parsed, creating new one");
+                        serde_json::Map::new()
+                    }
+                },
                 Err(_) => serde_json::Map::new()
             }
         } else {
             serde_json::Map::new()
         };
         
+        // Add both the filename and the cache_key entries
         cache_map.insert(file_name.clone(), serde_json::Value::String(id.clone()));
+        cache_map.insert(cache_key.clone(), serde_json::Value::String(id.clone()));
+        
         let cache_content = serde_json::to_string_pretty(&cache_map)?;
         
         // Make sure the directory exists
-        if let Some(parent) = cache_file.parent() {
-            if !parent.exists() {
-                tokio::fs::create_dir_all(parent).await?;
-            }
+        let parent = cache_file.parent().unwrap();
+        if !parent.exists() {
+            tokio::fs::create_dir_all(parent).await?;
         }
         
-        tokio::fs::write(&cache_file, cache_content).await?;
+        // Write the updated cache
+        match tokio::fs::write(&cache_file, &cache_content).await {
+            // Ok(_) => eprintln!("Cache file updated successfully"),
+            // Err(e) => eprintln!("Failed to write cache file: {}", e),
+        }
+        
+        // Send notification that we're uploading a new voice
+        sender.send(Event::Notification(
+            Notification::new(
+                format!("Uploaded new voice: {} ({}/{})", 
+                    file_name, next_index + 1, voice_files.len()),
+                NotificationLevel::Info
+            )
+        ))?;
+        
         id
     };
     
