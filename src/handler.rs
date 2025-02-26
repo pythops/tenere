@@ -1,6 +1,6 @@
 use crate::llm::{LLMAnswer, LLMRole};
 use crate::{chat::Chat, prompt::Mode};
-use crate::event::TTSEvent; // Add this import
+use crate::event::TTSEvent;
 
 use crate::{
     app::{App, AppResult, FocusedBlock},
@@ -37,6 +37,16 @@ pub async fn handle_key_events(
         KeyCode::Char('t') if key_event.modifiers == KeyModifiers::CONTROL => {
             app.terminate_response_signal
                 .store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+
+        // Read the current response with TTS
+        KeyCode::Char('l') if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
+            // Play the current answer with TTS
+            if !app.chat.answer.plain_answer.is_empty() {
+                sender.send(Event::TTSEvent(TTSEvent::PlayText(
+                    app.chat.answer.plain_answer.clone(),
+                )))?;
+            }
         }
 
         // scroll down
@@ -180,16 +190,6 @@ pub async fn handle_key_events(
             }
             _ => {}
         },
-
-        // Add a keyboard shortcut to read the current response with TTS
-        KeyCode::Char('t') if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
-            // Play the current answer with TTS
-            if !app.chat.answer.plain_answer.is_empty() {
-                sender.send(Event::TTSEvent(TTSEvent::PlayText(
-                    app.chat.answer.plain_answer.clone(),
-                )))?;
-            }
-        }
 
         _ => {}
     }

@@ -11,7 +11,6 @@ use strum_macros::EnumIter;
 use tokio::sync::mpsc::UnboundedSender;
 
 use std::sync::Arc;
-use crate::utils::parse_json_safely;
 
 #[async_trait]
 pub trait LLM: Send + Sync {
@@ -59,21 +58,4 @@ impl LLMModel {
         }
     }
 
-    fn parse_response(&self, response: &str) -> Result<LLMResponse, String> {
-        match parse_json_safely(response) {
-            Ok(json) => {
-                // Process valid JSON
-                // ...
-            }
-            Err(e) => {
-                // Handle JSON parse error more gracefully
-                log::error!("Failed to parse LLM response: {}", e);
-                log::debug!("Problematic response: {}", response);
-                
-                // Either return a meaningful error or try to extract usable content
-                // from the raw response without relying on JSON structure
-                Err(format!("Failed to parse LLM response: {}", e))
-            }
-        }
-    }
 }
