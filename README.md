@@ -171,6 +171,7 @@ Include your API key in the configuration file:
 openai_api_key = "Your API key here"
 model = "gpt-3.5-turbo"
 url = "https://api.openai.com/v1/chat/completions"
+system_prompt = "You are a helpful assistant."
 ```
 
 The default model is set to `gpt-3.5-turbo`. Check out the [OpenAI documentation](https://platform.openai.com/docs/models/gpt-3-5) for more info.

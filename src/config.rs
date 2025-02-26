@@ -38,6 +38,9 @@ pub struct ChatGPTConfig {
 
     #[serde(default = "ChatGPTConfig::default_url")]
     pub url: String,
+    
+    #[serde(default = "ChatGPTConfig::default_system_prompt")]
+    pub system_prompt: String,
 }
 
 impl Default for ChatGPTConfig {
@@ -46,6 +49,7 @@ impl Default for ChatGPTConfig {
             openai_api_key: None,
             model: Self::default_model(),
             url: Self::default_url(),
+            system_prompt: Self::default_system_prompt(),
         }
     }
 }
@@ -57,6 +61,10 @@ impl ChatGPTConfig {
 
     pub fn default_url() -> String {
         String::from("https://api.openai.com/v1/chat/completions")
+    }
+    
+    pub fn default_system_prompt() -> String {
+        String::from("You are a helpful assistant.")
     }
 }
 
