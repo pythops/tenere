@@ -67,7 +67,6 @@ pub async fn upload_voice_file(file_path: &std::path::Path, tts_config: &TTSConf
     debug!("Using voice API endpoint: {}", voice_url);
     
     // Since we don't have multipart feature enabled, we'll use curl command-line instead
-    // This is a common workaround for file uploads without adding dependencies
     let file_path_str = file_path.to_string_lossy();
     let output = tokio::process::Command::new("curl")
         .args([
@@ -122,7 +121,7 @@ pub async fn play_tts(text: &str, tts_config: &TTSConfig) -> Result<(), Box<dyn 
         response_format: "mp3".to_string(),
     };
 
-    debug!("Sending request to TTS API with voice: {:?}", request.voice);
+    debug!("Sending request to TTS API at: {}", tts_config.url);
     
     // Send request to TTS service using the configured URL
     let client = Client::new();
@@ -293,7 +292,7 @@ fn setup_streaming_player(content_type: &str) -> Result<(tokio::process::Child, 
 
 /// Helper function to get the default voice file directory
 pub fn get_voice_dir() -> Result<std::path::PathBuf, Box<dyn Error>> {
-    let voice_dir = dirs::config_dir()
+    let mut voice_dir = dirs::config_dir()
         .ok_or_else(|| "Failed to find config directory")?
         .join("tenere")
         .join("audio");

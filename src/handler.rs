@@ -459,8 +459,18 @@ async fn load_voice_file(
         
         // Write the updated cache
         match tokio::fs::write(&cache_file, &cache_content).await {
-            // Ok(_) => eprintln!("Cache file updated successfully"),
-            // Err(e) => eprintln!("Failed to write cache file: {}", e),
+            Ok(_) => sender.send(Event::Notification(
+                Notification::new(
+                    "Voice cache updated successfully".to_string(),
+                    NotificationLevel::Info
+                )
+            )).unwrap_or_default(),
+            Err(e) => sender.send(Event::Notification(
+                Notification::new(
+                    format!("Failed to write voice cache file: {}", e),
+                    NotificationLevel::Error
+                )
+            )).unwrap_or_default(),
         }
         
         // Send notification that we're uploading a new voice
