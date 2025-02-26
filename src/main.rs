@@ -114,9 +114,9 @@ async fn handle_tts_event(event: TTSEvent, tts_config: &TTSConfig) {
     match event {
         TTSEvent::PlayText(text) => {
             // Log to help debug
-            eprintln!("Playing TTS: {} characters", text.len());
+            // eprintln!("Playing TTS: {} characters", text.len());
             if let Err(e) = tts::play_tts(&text, tts_config).await {
-                eprintln!("TTS error: {}", e);
+                eprintln!("\nTTS error: {}", e);
             }
         },
         TTSEvent::Complete => {
