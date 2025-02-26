@@ -119,10 +119,18 @@ async fn main() -> AppResult<()> {
 async fn handle_tts_event(event: TTSEvent, tts_config: &TTSConfig) {
     match event {
         TTSEvent::PlayText { text, voice: _ } => {
-            // We pass the whole tts_config which already contains the default_voice
-            if let Err(e) = tts::play_tts(&text, tts_config).await {
-                eprintln!("TTS error: {}", e);
-            }
+            // Clone what we need to move into the background task
+            let tts_config = tts_config.clone();
+            let text = text.clone();
+            
+            // Spawn a background task for TTS playback to avoid blocking the UI
+            tokio::spawn(async move {
+                if let Err(e) = tts::play_tts(&text, &tts_config).await {
+                    eprintln!("TTS error: {}", e);
+                }
+            });
+            
+            // Return immediately so the main application can continue handling input
         },
         TTSEvent::Complete => {
             // TTS playback completed
