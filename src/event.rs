@@ -20,7 +20,7 @@ pub enum Event {
 
 #[derive(Debug, Clone)]
 pub enum TTSEvent {
-    PlayText(String),
+    PlayText { text: String, voice: Option<String> },
     Complete,
     Error(String),
 }

@@ -2,6 +2,7 @@ use std::error::Error;
 use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use serde::Serialize;
+use serde::Deserialize;
 use futures::StreamExt;
 use reqwest::Client;
 use reqwest::header;
@@ -35,6 +36,67 @@ struct TTSRequest {
     response_format: String,
 }
 
+/// Structure for the voice upload response
+#[derive(Debug, Deserialize)]
+struct VoiceResponse {
+    voice_id: String,
+    created: u64,
+}
+
+/// Upload a voice file to be used as a custom TTS voice
+pub async fn upload_voice_file(file_path: &std::path::Path, tts_config: &TTSConfig) -> Result<String, Box<dyn Error>> {
+    debug!("Uploading voice file: {:?}", file_path);
+    
+    // Extract the filename without extension to use as voice name
+    let file_name = file_path.file_stem()
+        .and_then(|os_str| os_str.to_str())
+        .unwrap_or("default_voice");
+    
+    // Check if file exists
+    if !file_path.exists() {
+        return Err(format!("Voice file not found: {:?}", file_path).into());
+    }
+    
+    // Read the file content
+    let file_content = tokio::fs::read(file_path).await?;
+    debug!("Read voice file with {} bytes", file_content.len());
+    
+    // Construct the voice API endpoint URL from the base TTS URL
+    let base_url = tts_config.url.trim_end_matches("/speech").trim_end_matches("/");
+    let voice_url = format!("{}/voice", base_url);
+    debug!("Using voice API endpoint: {}", voice_url);
+    
+    // Since we don't have multipart feature enabled, we'll use curl command-line instead
+    // This is a common workaround for file uploads without adding dependencies
+    let file_path_str = file_path.to_string_lossy();
+    let output = tokio::process::Command::new("curl")
+        .args([
+            "-X", "POST",
+            "-F", &format!("file=@{}", file_path_str),
+            "-F", &format!("name={}", file_name),
+            &voice_url
+        ])
+        .output()
+        .await?;
+    
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr);
+        debug!("Voice upload failed: {}", error);
+        return Err(format!("Voice upload failed: {}", error).into());
+    }
+    
+    // Parse the JSON response to get the voice ID
+    let response_json = String::from_utf8_lossy(&output.stdout);
+    let response: serde_json::Value = serde_json::from_str(&response_json)?;
+    
+    let voice_id = response["voice_id"].as_str()
+        .ok_or("Invalid response: missing voice_id field")?
+        .to_string();
+    
+    debug!("Successfully uploaded voice with ID: {}", voice_id);
+    Ok(voice_id)
+}
+
 /// Play text through TTS service with pure streaming (no file storage)
 pub async fn play_tts(text: &str, tts_config: &TTSConfig) -> Result<(), Box<dyn Error>> {
     debug!("TTS request for text: {}", text);
@@ -53,14 +115,14 @@ pub async fn play_tts(text: &str, tts_config: &TTSConfig) -> Result<(), Box<dyn 
     let request = TTSRequest {
         model: "Zyphra/Zonos-v0.1-transformer".to_string(),
         input: text.to_string(),
-        voice: None,
+        voice: tts_config.default_voice.clone(), // Use default voice if configured
         speed: 1.0,
         language: "en-us".to_string(),
         emotion: None,
         response_format: "mp3".to_string(),
     };
 
-    debug!("Sending request to TTS API at: {}", tts_config.url);
+    debug!("Sending request to TTS API with voice: {:?}", request.voice);
     
     // Send request to TTS service using the configured URL
     let client = Client::new();
@@ -227,4 +289,35 @@ fn setup_streaming_player(content_type: &str) -> Result<(tokio::process::Child, 
 
     debug!("No suitable player found!");
     Err("No suitable streaming audio player found. Please install mpv, ffplay, or aplay.".into())
+}
+
+/// Helper function to get the default voice file directory
+pub fn get_voice_dir() -> Result<std::path::PathBuf, Box<dyn Error>> {
+    let voice_dir = dirs::config_dir()
+        .ok_or_else(|| "Failed to find config directory")?
+        .join("tenere")
+        .join("audio");
+        
+    // Create directory if it doesn't exist
+    if !voice_dir.exists() {
+        std::fs::create_dir_all(&voice_dir)?;
+    }
+    
+    Ok(voice_dir)
+}
+
+/// Load a voice from a file in the config directory and set as default
+pub async fn load_voice_from_file(file_name: &str, tts_config: &mut TTSConfig) -> Result<String, Box<dyn Error>> {
+    let voice_dir = get_voice_dir()?;
+    let file_path = voice_dir.join(file_name);
+    
+    debug!("Loading voice from file: {:?}", file_path);
+    
+    // Upload the voice file
+    let voice_id = upload_voice_file(&file_path, tts_config).await?;
+    
+    // Store the voice ID as the default
+    tts_config.default_voice = Some(voice_id.clone());
+    
+    Ok(voice_id)
 }

@@ -80,13 +80,17 @@ pub struct OllamaConfig {
 #[derive(Deserialize, Debug, Clone)]
 pub struct TTSConfig {
     #[serde(default = "TTSConfig::default_url")]
-    pub url: String
+    pub url: String,
+    
+    #[serde(default)]
+    pub default_voice: Option<String>,
 }
 
 impl Default for TTSConfig {
     fn default() -> Self {
         Self {
             url: Self::default_url(),
+            default_voice: None,
         }
     }
 }
@@ -110,6 +114,9 @@ pub struct KeyBindings {
 
     #[serde(default = "KeyBindings::default_stop_stream")]
     pub stop_stream: char,
+    
+    #[serde(default = "KeyBindings::default_load_voice")]
+    pub load_voice: char,
 }
 
 impl Default for KeyBindings {
@@ -119,6 +126,7 @@ impl Default for KeyBindings {
             show_history: 'h',
             new_chat: 'n',
             stop_stream: 't',
+            load_voice: 'v',
         }
     }
 }
@@ -139,6 +147,10 @@ impl KeyBindings {
     fn default_stop_stream() -> char {
         't'
     }
+    
+    fn default_load_voice() -> char {
+        'v'
+    }
 }
 
 impl Config {
@@ -153,7 +165,7 @@ impl Config {
         };
 
         let config = std::fs::read_to_string(conf_path).unwrap_or_default();
-        let app_config: Config = toml::from_str(&config).unwrap();
+        let mut app_config: Config = toml::from_str(&config).unwrap();
 
         if app_config.llm == LLMBackend::LLamacpp && app_config.llamacpp.is_none() {
             eprintln!("Config for LLamacpp is not provided");
@@ -163,6 +175,20 @@ impl Config {
         if app_config.llm == LLMBackend::Ollama && app_config.ollama.is_none() {
             eprintln!("Config for Ollama is not provided");
             std::process::exit(1)
+        }
+        
+        // Try to load saved default voice from file if one exists
+        let voice_file = dirs::config_dir()
+            .unwrap()
+            .join("tenere")
+            .join("default_voice.txt");
+            
+        if voice_file.exists() {
+            if let Ok(voice_id) = std::fs::read_to_string(&voice_file) {
+                if !voice_id.trim().is_empty() {
+                    app_config.tts.default_voice = Some(voice_id.trim().to_string());
+                }
+            }
         }
 
         app_config

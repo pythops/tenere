@@ -82,13 +82,16 @@ async fn main() -> AppResult<()> {
                     let mut llm = llm.lock().await;
                     llm.append_chat_msg(app.chat.answer.plain_answer.clone(), LLMRole::ASSISTANT);
                     
-                    // Play the full response with TTS when it completes
+                    // Play the full response with TTS when it completes,
+                    // using the default voice from config if set.
                     let final_answer = app.chat.answer.plain_answer.clone();
                     if !final_answer.is_empty() {
-                        tui.events.sender.send(Event::TTSEvent(TTSEvent::PlayText(final_answer)))?;
+                        tui.events.sender.send(Event::TTSEvent(TTSEvent::PlayText {
+                            text: final_answer,
+                            voice: config.tts.default_voice.clone(), // Optional default voice
+                        }))?;
                     }
                 }
-
                 app.chat.handle_answer(LLMAnswer::EndAnswer, &formatter);
                 app.terminate_response_signal
                     .store(false, std::sync::atomic::Ordering::Relaxed);
@@ -113,9 +116,8 @@ async fn main() -> AppResult<()> {
 
 async fn handle_tts_event(event: TTSEvent, tts_config: &TTSConfig) {
     match event {
-        TTSEvent::PlayText(text) => {
-            // Log to help debug
-            // eprintln!("Playing TTS: {} characters", text.len());
+        TTSEvent::PlayText { text, voice: _ } => {
+            // We pass the whole tts_config which already contains the default_voice
             if let Err(e) = tts::play_tts(&text, tts_config).await {
                 eprintln!("TTS error: {}", e);
             }
