@@ -6,6 +6,7 @@ use futures::StreamExt;
 use reqwest::Client;
 use reqwest::header;
 use tokio::process::Command as TokioCommand;
+use crate::config::TTSConfig;
 
 // Debug helper macro - you can remove this after debugging
 macro_rules! debug {
@@ -35,7 +36,7 @@ struct TTSRequest {
 }
 
 /// Play text through TTS service with pure streaming (no file storage)
-pub async fn play_tts(text: &str) -> Result<(), Box<dyn Error>> {
+pub async fn play_tts(text: &str, tts_config: &TTSConfig) -> Result<(), Box<dyn Error>> {
     debug!("TTS request for text: {}", text);
     
     // Add a terminal bell to indicate TTS is starting (optional)
@@ -59,11 +60,11 @@ pub async fn play_tts(text: &str) -> Result<(), Box<dyn Error>> {
         response_format: "mp3".to_string(),
     };
 
-    debug!("Sending request to TTS API on port 8000");
+    debug!("Sending request to TTS API at: {}", tts_config.url);
     
-    // Send request to TTS service
+    // Send request to TTS service using the configured URL
     let client = Client::new();
-    let response = client.post("http://0.0.0.0:8000/v1/audio/speech")
+    let response = client.post(&tts_config.url)
         .json(&request)
         .send()
         .await?;

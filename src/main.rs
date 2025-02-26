@@ -2,7 +2,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 use std::{env, io, path::PathBuf};
 use tenere::app::{App, AppResult};
-use tenere::config::Config;
+use tenere::config::{Config, TTSConfig};
 use tenere::event::{Event, EventHandler, TTSEvent};
 use tenere::formatter::Formatter;
 use tenere::handler::handle_key_events;
@@ -101,7 +101,7 @@ async fn main() -> AppResult<()> {
                 app.notifications.push(notification);
             }
             Event::TTSEvent(tts_event) => {
-                handle_tts_event(tts_event).await;
+                handle_tts_event(tts_event, &config.tts).await;
             }
         }
     }
@@ -110,12 +110,12 @@ async fn main() -> AppResult<()> {
     Ok(())
 }
 
-async fn handle_tts_event(event: TTSEvent) {
+async fn handle_tts_event(event: TTSEvent, tts_config: &TTSConfig) {
     match event {
         TTSEvent::PlayText(text) => {
             // Log to help debug
             eprintln!("Playing TTS: {} characters", text.len());
-            if let Err(e) = tts::play_tts(&text).await {
+            if let Err(e) = tts::play_tts(&text, tts_config).await {
                 eprintln!("TTS error: {}", e);
             }
         },

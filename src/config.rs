@@ -19,6 +19,9 @@ pub struct Config {
     pub llamacpp: Option<LLamacppConfig>,
 
     pub ollama: Option<OllamaConfig>,
+    
+    #[serde(default)]
+    pub tts: TTSConfig,
 }
 
 pub fn default_llm_backend() -> LLMBackend {
@@ -71,6 +74,27 @@ pub struct LLamacppConfig {
 pub struct OllamaConfig {
     pub url: String,
     pub model: String,
+}
+
+// TTS
+#[derive(Deserialize, Debug, Clone)]
+pub struct TTSConfig {
+    #[serde(default = "TTSConfig::default_url")]
+    pub url: String
+}
+
+impl Default for TTSConfig {
+    fn default() -> Self {
+        Self {
+            url: Self::default_url(),
+        }
+    }
+}
+
+impl TTSConfig {
+    pub fn default_url() -> String {
+        String::from("http://0.0.0.0:8000/v1/audio/speech")
+    }
 }
 
 #[derive(Deserialize, Debug)]
