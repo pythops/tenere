@@ -15,6 +15,14 @@ pub enum Event {
     Resize(u16, u16),
     LLMEvent(LLMAnswer),
     Notification(Notification),
+    TTSEvent(TTSEvent),
+}
+
+#[derive(Debug, Clone)]
+pub enum TTSEvent {
+    PlayText { text: String, voice: Option<String> },
+    Complete,
+    Error(String),
 }
 
 #[allow(dead_code)]

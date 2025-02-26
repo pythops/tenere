@@ -57,4 +57,5 @@ impl LLMModel {
             LLMBackend::Ollama => Box::new(Ollama::new(config.ollama.clone().unwrap())),
         }
     }
+
 }

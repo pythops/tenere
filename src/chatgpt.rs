@@ -20,6 +20,7 @@ pub struct ChatGPT {
     openai_api_key: String,
     model: String,
     url: String,
+    system_prompt: String,
     messages: Vec<HashMap<String, String>>,
 }
 
@@ -45,6 +46,7 @@ You need to define one whether in the configuration file or as an environment va
             openai_api_key,
             model: config.model,
             url: config.url,
+            system_prompt: config.system_prompt,
             messages: Vec::new(),
         }
     }
@@ -80,7 +82,7 @@ impl LLM for ChatGPT {
                 ("role".to_string(), "system".to_string()),
                 (
                     "content".to_string(),
-                    "You are a helpful assistant.".to_string(),
+                    self.system_prompt.clone(),
                 ),
             ])),
         ];
@@ -131,7 +133,7 @@ impl LLM for ChatGPT {
                                 sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
                             }
 
-                            sleep(Duration::from_millis(100)).await;
+                            sleep(Duration::from_millis(1)).await;
                         }
                     }
                 }
