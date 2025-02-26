@@ -6,7 +6,7 @@ use tenere::config::{Config, TTSConfig};
 use tenere::event::{Event, EventHandler, TTSEvent};
 use tenere::formatter::Formatter;
 use tenere::handler::handle_key_events;
-use tenere::llm::{LLMAnswer, LLMRole};
+use tenere::llm::{LLMAnswer, LLMRole, LLM}; // Add LLM import
 use tenere::tui::Tui;
 use tenere::tts;
 
@@ -16,6 +16,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use clap::{crate_description, crate_version, Arg, Command};
+
+use ratatui::backend::Backend; // Add this import
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
@@ -56,19 +58,36 @@ async fn main() -> AppResult<()> {
     // load potential history data from archive files
     app.history.load_history(tui.events.sender.clone());
 
+    // Make sure to clean up TTS processes on exit
+    let result = run_app(&mut app, llm, &mut tui, &formatter, &config).await;
+    
+    // Clean up TTS processes before exiting
+    tts::kill_all_tts_processes();
+    
+    tui.exit()?;
+    result
+}
+
+async fn run_app<B: Backend>(
+    app: &mut App<'_>, 
+    llm: Arc<Mutex<Box<dyn LLM + 'static>>>, 
+    tui: &mut Tui<B>,
+    formatter: &Formatter<'_>,
+    config: &Arc<Config>
+) -> AppResult<()> {
     while app.running {
-        tui.draw(&mut app)?;
+        tui.draw(app)?;
         match tui.events.next().await? {
             Event::Tick => app.tick(),
             Event::Key(key_event) => {
-                handle_key_events(key_event, &mut app, llm.clone(), tui.events.sender.clone())
+                handle_key_events(key_event, app, llm.clone(), tui.events.sender.clone())
                     .await?;
             }
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
             Event::LLMEvent(LLMAnswer::Answer(answer)) => {
                 app.chat
-                    .handle_answer(LLMAnswer::Answer(answer.clone()), &formatter);
+                    .handle_answer(LLMAnswer::Answer(answer.clone()), formatter);
                 
                 // We don't want to trigger TTS for every tiny chunk
                 // Only send longer message portions to avoid choppy audio
@@ -94,13 +113,13 @@ async fn main() -> AppResult<()> {
                         }))?;
                     }
                 }
-                app.chat.handle_answer(LLMAnswer::EndAnswer, &formatter);
+                app.chat.handle_answer(LLMAnswer::EndAnswer, formatter);
                 app.terminate_response_signal
                     .store(false, std::sync::atomic::Ordering::Relaxed);
             }
             Event::LLMEvent(LLMAnswer::StartAnswer) => {
                 app.spinner.active = false;
-                app.chat.handle_answer(LLMAnswer::StartAnswer, &formatter);
+                app.chat.handle_answer(LLMAnswer::StartAnswer, formatter);
             }
 
             Event::Notification(notification) => {
@@ -112,7 +131,6 @@ async fn main() -> AppResult<()> {
         }
     }
 
-    tui.exit()?;
     Ok(())
 }
 

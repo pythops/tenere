@@ -39,6 +39,9 @@ tempfile = "3"
 bytes = "1.5.0"
 chrono = "0.4"  # For timestamping debug logs
 toml_edit = "0.21.0"
+lazy_static = "1.4.0"
+ctrlc = "3.4.0"
+libc = "0.2.142"  # For process killing on Unix
 
 [profile.release]
 lto = "fat"

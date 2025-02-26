@@ -8,6 +8,10 @@ use reqwest::Client;
 use reqwest::header;
 use tokio::process::Command as TokioCommand;
 use crate::config::TTSConfig;
+use std::sync::{Arc, Mutex, Once};
+use lazy_static::lazy_static;
+use std::collections::HashSet;
+use std::process::Child as StdChild;
 
 // Debug helper macro - you can remove this after debugging
 macro_rules! debug {
@@ -133,7 +137,7 @@ pub async fn play_tts(text: &str, tts_config: &TTSConfig) -> Result<(), Box<dyn 
     let status = response.status();
     debug!("Got response with status: {}", status);
     
-    if !status.is_success() {
+    if (!status.is_success()) {
         let error_text = response.text().await?;
         debug!("Error response: {}", error_text);
         return Err(format!("TTS request failed with status: {}, body: {}", status, error_text).into());
@@ -202,7 +206,13 @@ async fn stream_audio(
     debug!("Closed stdin, waiting for player to finish");
     
     // Wait for player to finish
+    let pid = player_child.id(); // Save PID before waiting
     let status = player_child.wait().await?;
+    
+    // Unregister the process since it's done
+    if let Some(pid_val) = pid {
+        unregister_tts_process(pid_val);
+    }
     
     if !status.success() {
         let code = status.code().unwrap_or(-1);
@@ -231,6 +241,9 @@ mod stream_helpers {
 
 /// Set up a streaming audio player based on what's available
 fn setup_streaming_player(content_type: &str) -> Result<(tokio::process::Child, tokio::process::ChildStdin), Box<dyn Error>> {
+    // Make sure cleanup is registered before creating any new processes
+    register_cleanup();
+
     // Try to find which players are available on the system
     let mpv_available = std::process::Command::new("mpv").arg("--version").output().is_ok();
     let ffplay_available = std::process::Command::new("ffplay").arg("-version").output().is_ok();
@@ -249,6 +262,11 @@ fn setup_streaming_player(content_type: &str) -> Result<(tokio::process::Child, 
             .stderr(Stdio::null())
             .spawn()?;
             
+        // Register the process for cleanup
+        if let Some(pid) = command.id() {
+            register_tts_process(pid);
+        }
+        
         let stdin = command.stdin.take()
             .ok_or_else(|| "Failed to open mpv stdin".to_string())?;
         debug!("Successfully started mpv");
@@ -265,6 +283,11 @@ fn setup_streaming_player(content_type: &str) -> Result<(tokio::process::Child, 
             .stderr(Stdio::null())
             .spawn()?;
             
+        // Register the process for cleanup
+        if let Some(pid) = command.id() {
+            register_tts_process(pid);
+        }
+        
         let stdin = command.stdin.take()
             .ok_or_else(|| "Failed to open ffplay stdin".to_string())?;
         debug!("Successfully started ffplay");
@@ -280,6 +303,11 @@ fn setup_streaming_player(content_type: &str) -> Result<(tokio::process::Child, 
             .stderr(Stdio::null())
             .spawn()?;
             
+        // Register the process for cleanup
+        if let Some(pid) = command.id() {
+            register_tts_process(pid);
+        }
+        
         let stdin = command.stdin.take()
             .ok_or_else(|| "Failed to open aplay stdin".to_string())?;
         debug!("Successfully started aplay");
@@ -319,4 +347,76 @@ pub async fn load_voice_from_file(file_name: &str, tts_config: &mut TTSConfig) -
     tts_config.default_voice = Some(voice_id.clone());
     
     Ok(voice_id)
+}
+
+// Add a global registry for tracking spawned processes
+lazy_static! {
+    static ref TTS_PROCESSES: Arc<Mutex<HashSet<u32>>> = Arc::new(Mutex::new(HashSet::new()));
+    static ref CLEANUP_REGISTERED: Once = Once::new();
+}
+
+// Register cleanup handler for program termination
+fn register_cleanup() {
+    CLEANUP_REGISTERED.call_once(|| {
+        let processes = TTS_PROCESSES.clone();
+        
+        // Register normal exit cleanup
+        std::env::set_var("TENERE_CLEANUP_REGISTERED", "true");
+        
+        // Register panic cleanup
+        let default_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |panic_info| {
+            kill_all_tts_processes();
+            default_hook(panic_info);
+        }));
+        
+        // Register CTRL+C handler
+        ctrlc::set_handler(move || {
+            kill_all_tts_processes();
+            std::process::exit(0);
+        }).expect("Error setting Ctrl-C handler");
+    });
+}
+
+// Kill all registered TTS processes
+pub fn kill_all_tts_processes() {
+    debug!("Cleaning up TTS processes");
+    if let Ok(mut processes) = TTS_PROCESSES.lock() {
+        for pid in processes.iter() {
+            debug!("Killing TTS process with PID: {}", pid);
+            // Cross-platform way to kill a process by PID
+            #[cfg(target_os = "windows")]
+            {
+                use std::process::Command;
+                let _ = Command::new("taskkill")
+                    .args(&["/F", "/PID", &pid.to_string()])
+                    .output();
+            }
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                // On Unix systems we can use the kill system call
+                unsafe {
+                    libc::kill(*pid as i32, libc::SIGTERM);
+                }
+            }
+        }
+        processes.clear();
+    }
+}
+
+// Register a new TTS process
+fn register_tts_process(pid: u32) {
+    if let Ok(mut processes) = TTS_PROCESSES.lock() {
+        processes.insert(pid);
+        debug!("Registered TTS process: {}", pid);
+    }
+}
+
+// Unregister a TTS process when it completes
+fn unregister_tts_process(pid: u32) {
+    if let Ok(mut processes) = TTS_PROCESSES.lock() {
+        processes.remove(&pid);
+        debug!("Unregistered TTS process: {}", pid);
+    }
 }
