@@ -3,11 +3,12 @@ use ratatui::Terminal;
 use std::{env, io, path::PathBuf};
 use tenere::app::{App, AppResult};
 use tenere::config::Config;
-use tenere::event::{Event, EventHandler};
+use tenere::event::{Event, EventHandler, TTSEvent};
 use tenere::formatter::Formatter;
 use tenere::handler::handle_key_events;
 use tenere::llm::{LLMAnswer, LLMRole};
 use tenere::tui::Tui;
+use tenere::tts;
 
 use tenere::llm::LLMModel;
 
@@ -67,12 +68,24 @@ async fn main() -> AppResult<()> {
             Event::Resize(_, _) => {}
             Event::LLMEvent(LLMAnswer::Answer(answer)) => {
                 app.chat
-                    .handle_answer(LLMAnswer::Answer(answer), &formatter);
+                    .handle_answer(LLMAnswer::Answer(answer.clone()), &formatter);
+                
+                // We don't want to trigger TTS for every tiny chunk
+                // Only send longer message portions to avoid choppy audio
+                if answer.len() > 80 && answer.contains('.') {
+                    tui.events.sender.send(Event::TTSEvent(TTSEvent::PlayText(answer)))?;
+                }
             }
             Event::LLMEvent(LLMAnswer::EndAnswer) => {
                 {
                     let mut llm = llm.lock().await;
                     llm.append_chat_msg(app.chat.answer.plain_answer.clone(), LLMRole::ASSISTANT);
+                    
+                    // Play the full response with TTS when it completes
+                    let final_answer = app.chat.answer.plain_answer.clone();
+                    if !final_answer.is_empty() {
+                        tui.events.sender.send(Event::TTSEvent(TTSEvent::PlayText(final_answer)))?;
+                    }
                 }
 
                 app.chat.handle_answer(LLMAnswer::EndAnswer, &formatter);
@@ -87,9 +100,30 @@ async fn main() -> AppResult<()> {
             Event::Notification(notification) => {
                 app.notifications.push(notification);
             }
+            Event::TTSEvent(tts_event) => {
+                handle_tts_event(tts_event).await;
+            }
         }
     }
 
     tui.exit()?;
     Ok(())
+}
+
+async fn handle_tts_event(event: TTSEvent) {
+    match event {
+        TTSEvent::PlayText(text) => {
+            // Log to help debug
+            eprintln!("Playing TTS: {} characters", text.len());
+            if let Err(e) = tts::play_tts(&text).await {
+                eprintln!("TTS error: {}", e);
+            }
+        },
+        TTSEvent::Complete => {
+            // TTS playback completed
+        },
+        TTSEvent::Error(err) => {
+            eprintln!("TTS error: {}", err);
+        }
+    }
 }

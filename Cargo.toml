@@ -21,6 +21,7 @@ futures = "0.3"
 reqwest = { version = "0.12", default-features = false, features = [
   "json",
   "rustls-tls",
+  "stream",  # Add this feature for byte streaming
 ] }
 ratatui = { version = "0.29", features = ["all-widgets"] }
 regex = "1"
@@ -32,6 +33,10 @@ tokio = { version = "1", features = ["full"] }
 toml = { version = "0.8" }
 tui-textarea = "0.7"
 unicode-width = "0.2"
+base64 = "0.13"
+tempfile = "3"
+bytes = "1.5.0"
+chrono = "0.4"  # For timestamping debug logs
 
 [profile.release]
 lto = "fat"
