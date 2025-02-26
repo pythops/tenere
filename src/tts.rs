@@ -2,7 +2,6 @@ use std::error::Error;
 use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use serde::Serialize;
-use serde::Deserialize;
 use futures::StreamExt;
 use reqwest::Client;
 use reqwest::header;
@@ -11,7 +10,6 @@ use crate::config::TTSConfig;
 use std::sync::{Arc, Mutex, Once};
 use lazy_static::lazy_static;
 use std::collections::HashSet;
-use std::process::Child as StdChild;
 
 // Debug helper macro - you can remove this after debugging
 macro_rules! debug {
@@ -38,13 +36,6 @@ struct TTSRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     emotion: Option<serde_json::Value>,
     response_format: String,
-}
-
-/// Structure for the voice upload response
-#[derive(Debug, Deserialize)]
-struct VoiceResponse {
-    voice_id: String,
-    created: u64,
 }
 
 /// Upload a voice file to be used as a custom TTS voice
@@ -137,7 +128,7 @@ pub async fn play_tts(text: &str, tts_config: &TTSConfig) -> Result<(), Box<dyn 
     let status = response.status();
     debug!("Got response with status: {}", status);
     
-    if (!status.is_success()) {
+    if !status.is_success() {
         let error_text = response.text().await?;
         debug!("Error response: {}", error_text);
         return Err(format!("TTS request failed with status: {}, body: {}", status, error_text).into());
@@ -320,7 +311,7 @@ fn setup_streaming_player(content_type: &str) -> Result<(tokio::process::Child, 
 
 /// Helper function to get the default voice file directory
 pub fn get_voice_dir() -> Result<std::path::PathBuf, Box<dyn Error>> {
-    let mut voice_dir = dirs::config_dir()
+    let voice_dir = dirs::config_dir()
         .ok_or_else(|| "Failed to find config directory")?
         .join("tenere")
         .join("audio");
@@ -358,7 +349,7 @@ lazy_static! {
 // Register cleanup handler for program termination
 fn register_cleanup() {
     CLEANUP_REGISTERED.call_once(|| {
-        let processes = TTS_PROCESSES.clone();
+        let _processes = TTS_PROCESSES.clone();
         
         // Register normal exit cleanup
         std::env::set_var("TENERE_CLEANUP_REGISTERED", "true");

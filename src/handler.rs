@@ -19,11 +19,8 @@ use tokio::sync::Mutex;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::tts;
-use std::path::Path;
 use tokio::fs;
 use crate::notification::{Notification, NotificationLevel};
-use std::sync::atomic::Ordering;
-use std::time::Duration;
 
 pub async fn handle_key_events(
     key_event: KeyEvent,
@@ -397,11 +394,23 @@ async fn load_voice_file(
                         }
                     },
                     Err(e) => {
+                        sender.send(Event::Notification(
+                            Notification::new(
+                                format!("Failed to parse voice cache: {}", e),
+                                NotificationLevel::Error
+                            )
+                        ))?;
                         // eprintln!("Failed to parse voice cache: {}", e);
                     }
                 }
             },
             Err(e) => {
+                sender.send(Event::Notification(
+                    Notification::new(
+                        format!("Failed to read voice cache file: {}", e),
+                        NotificationLevel::Error
+                    )
+                ))?;
                 // eprintln!("Failed to read voice cache file: {}", e);
             }
         }
