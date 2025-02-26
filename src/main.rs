@@ -70,11 +70,12 @@ async fn main() -> AppResult<()> {
                 app.chat
                     .handle_answer(LLMAnswer::Answer(answer.clone()), &formatter);
                 
+                // TODO: this isn't working
                 // We don't want to trigger TTS for every tiny chunk
                 // Only send longer message portions to avoid choppy audio
-                if answer.len() > 80 && answer.contains('.') {
-                    tui.events.sender.send(Event::TTSEvent(TTSEvent::PlayText(answer)))?;
-                }
+                // if answer.len() > 80 && answer.contains('.') {
+                //     tui.events.sender.send(Event::TTSEvent(TTSEvent::PlayText(answer)))?;
+                // }
             }
             Event::LLMEvent(LLMAnswer::EndAnswer) => {
                 {
@@ -116,7 +117,7 @@ async fn handle_tts_event(event: TTSEvent, tts_config: &TTSConfig) {
             // Log to help debug
             // eprintln!("Playing TTS: {} characters", text.len());
             if let Err(e) = tts::play_tts(&text, tts_config).await {
-                eprintln!("\nTTS error: {}", e);
+                eprintln!("TTS error: {}", e);
             }
         },
         TTSEvent::Complete => {
