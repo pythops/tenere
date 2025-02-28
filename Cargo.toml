@@ -32,6 +32,8 @@ tokio = { version = "1", features = ["full"] }
 toml = { version = "0.8" }
 tui-textarea = "0.7"
 unicode-width = "0.2"
+uuid = { version = "1.4", features = ["v4"] }
+chrono = "0.4"
 
 [profile.release]
 lto = "fat"
