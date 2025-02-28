@@ -6,6 +6,13 @@ use serde::Deserialize;
 use std::path::PathBuf;
 
 #[derive(Deserialize, Debug)]
+#[derive(Default)]
+pub struct InputConfig {
+    pub input_file: Option<String>,
+    pub output_file: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct Config {
     #[serde(default)]
     pub key_bindings: KeyBindings,
@@ -19,10 +26,57 @@ pub struct Config {
     pub llamacpp: Option<LLamacppConfig>,
 
     pub ollama: Option<OllamaConfig>,
+
+    pub xai: Option<XaiConfig>,
+
+    pub gemini: Option<GeminiConfig>,
+
+    #[serde(default)]
+    pub input: InputConfig,  
+
+    //#[serde(default)]
+    //pub output_file: InputConfig,
+
 }
 
 pub fn default_llm_backend() -> LLMBackend {
     LLMBackend::ChatGPT
+}
+
+// XAI 
+#[derive(Deserialize, Debug, Clone)]
+pub struct XaiConfig {
+    pub url: String,
+    pub xai_api_key: Option<String>,
+    pub model: String,
+}
+
+impl XaiConfig {
+    pub fn default_model() -> String {
+        String::from("grok-2")
+    }
+
+    pub fn default_url() -> String {
+        String::from("https://api.xai/v1/chat/completions")
+    }
+}
+
+// GEMINI 
+#[derive(Deserialize, Debug, Clone)]
+pub struct GeminiConfig {
+    pub url: String,
+    pub gemini_api_key: Option<String>,
+    pub model: String,
+}
+
+impl GeminiConfig {
+    pub fn default_model() -> String {
+        String::from("flash-2.0-flash")
+    }
+
+    pub fn default_url() -> String {
+        String::from("https://generativelanguage.googleapis.com/v1beta/models")
+    }
 }
 
 // ChatGPT
@@ -140,6 +194,17 @@ impl Config {
             eprintln!("Config for Ollama is not provided");
             std::process::exit(1)
         }
+
+        if app_config.llm == LLMBackend::Xai && app_config.xai.is_none() {
+            eprintln!("Config for XAI is not provided");
+            std::process::exit(1)
+        }
+
+        if app_config.llm == LLMBackend::Gemini && app_config.xai.is_none() {
+            eprintln!("Config for GEMINI is not provided");
+            std::process::exit(1)
+        }
+
 
         app_config
     }
