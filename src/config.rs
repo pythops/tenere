@@ -32,10 +32,10 @@ pub struct Config {
     pub gemini: Option<GeminiConfig>,
 
     #[serde(default)]
-    pub input: InputConfig,  // Changed from input_file to input to match TOML structure
+    pub input: InputConfig,  
 
-    #[serde(default)]
-    pub output_file: Option<String>,
+    //#[serde(default)]
+    //pub output_file: InputConfig,
 
 }
 

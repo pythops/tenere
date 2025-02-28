@@ -107,7 +107,8 @@ impl Prompt<'_> {
                 }
             }
         } else {
-            eprintln!("    No input file specified.");
+            // TODO: send to notifications
+            //eprintln!("    No input file specified.");
             None
     }
 }

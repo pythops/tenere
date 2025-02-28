@@ -45,7 +45,7 @@ impl<'a> App<'a> {
         Self {
             running: true,
             prompt: Prompt::default(),
-            chat: Chat::new(),
+            chat: Chat::new(config.clone()),
             focused_block: FocusedBlock::Prompt,
             history: History::new(),
             notifications: Vec::new(),

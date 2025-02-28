@@ -1,4 +1,5 @@
 use std::{rc::Rc, sync::atomic::AtomicBool, fs::OpenOptions, io::Write};
+use std::sync::Arc;
 
 use ratatui::{
     layout::Rect,
@@ -9,6 +10,7 @@ use ratatui::{
 
 use crate::{formatter::Formatter, llm::LLMAnswer};
 use crate::prompt::Prompt;
+use crate::config::Config;
 
 // Define CommandResult at module level with pub visibility
 #[derive(Debug)]
@@ -33,6 +35,7 @@ pub struct Chat<'a> {
     area_height: u16,
     area_width: u16,
     pub automatic_scroll: Rc<AtomicBool>,
+    pub config: Arc<Config>,
 }
 
 impl Default for Chat<'_> {
@@ -45,58 +48,74 @@ impl Default for Chat<'_> {
             area_height: 0,
             area_width: 0,
             automatic_scroll: Rc::new(AtomicBool::new(true)),
+            config: Arc::new(Config::load(None)),
         }
     }
 }
 
 impl Chat<'_> {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(config: Arc<Config>) -> Self {
+        Self {
+            plain_chat: Vec::new(),
+            formatted_chat: Text::raw(""),
+            answer: Answer::default(),
+            scroll: 0,
+            area_height: 0,
+            area_width: 0,
+            automatic_scroll: Rc::new(AtomicBool::new(true)),
+            config,
+        }
     }
 
     pub fn handle_answer(&mut self, event: LLMAnswer, formatter: &Formatter) {
+        // First match: Borrow answer instead of moving it
         match event {
             LLMAnswer::StartAnswer => {
                 self.formatted_chat.lines.pop();
-                let _ = std::fs::write("/tmp/ans.md", "");
             }
-
-            LLMAnswer::Answer(answer) => {
+            LLMAnswer::Answer(ref answer) => {  // Use ref to borrow answer
                 self.answer.plain_answer.push_str(answer.as_str());
-
-                self.answer.formatted_answer =
-                    formatter.format(format!("🤖: {}", &self.answer.plain_answer).as_str());
-
-                // Append the chunk to /tmp/ans.md (streaming)
-                let mut file = OpenOptions::new()
-                    .create(true)
-                    .append(true)  // Enable append mode
-                    .open("/tmp/ans.md")
-                    .expect("Failed to open /tmp/ans.md");
-                file.write_all(answer.as_bytes()).expect("Failed to write to /tmp/ans.md");
-                file.write_all(b"\n").expect("Failed to write newline to /tmp/ans.md");
+                self.answer.formatted_answer = formatter.format(format!("🤖: {}", &self.answer.plain_answer).as_str());
             }
-
             LLMAnswer::EndAnswer => {
-                self.formatted_chat
-                    .extend(self.answer.formatted_answer.clone());
-
+                self.formatted_chat.extend(self.answer.formatted_answer.clone());
                 self.formatted_chat.extend(Text::raw("\n"));
-
                 let full_answer = format!("🤖: {}", self.answer.plain_answer);
-                self.plain_chat.push(full_answer.clone());
-
-                // Write the full answer to /tmp/ans.md (non-streaming or final state)
-                let mut file = OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .truncate(true) // Overwrite the file with the final answer
-                    .open("/tmp/ans.md")
-                    .expect("Failed to open /tmp/ans.md");
-                file.write_all(full_answer.as_bytes()).expect("Failed to write to /tmp/ans.md");
-                file.write_all(b"\n").expect("Failed to write newline to /tmp/ans.md");
-
+                self.plain_chat.push(full_answer);
                 self.answer = Answer::default();
+            }
+        }
+
+        // Second match: Now safe to move answer
+        if let Some(output_path) = self.config.input.output_file.as_deref() {
+            match event {
+                LLMAnswer::StartAnswer => {
+                    let _ = std::fs::write(output_path, "").expect("Failed to clear output file");
+                }
+                LLMAnswer::Answer(answer) => {  // Move answer here
+                    let mut file = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(output_path)
+                        .expect("Failed to open output file");
+                    file.write_all(answer.as_bytes())
+                        .expect("Failed to write to output file");
+                    file.write_all(b"\n")
+                        .expect("Failed to write newline to output file");
+                }
+                LLMAnswer::EndAnswer => {
+                    let full_answer = format!("🤖: {}", self.answer.plain_answer);
+                    let mut file = OpenOptions::new()
+                        .create(true)
+                        .write(true)
+                        .truncate(true)
+                        .open(output_path)
+                        .expect("Failed to open output file");
+                    file.write_all(full_answer.as_bytes())
+                        .expect("Failed to write to output file");
+                    file.write_all(b"\n")
+                        .expect("Failed to write newline to output file");
+                }
             }
         }
     }
