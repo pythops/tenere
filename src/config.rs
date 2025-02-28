@@ -20,31 +20,11 @@ pub struct Config {
 
     pub ollama: Option<OllamaConfig>,
 
-    pub xai: Option<XaiConfig>,
-
     pub gemini: Option<GeminiConfig>,
 }
 
 pub fn default_llm_backend() -> LLMBackend {
     LLMBackend::ChatGPT
-}
-
-// XAI 
-#[derive(Deserialize, Debug, Clone)]
-pub struct XaiConfig {
-    pub url: String,
-    pub xai_api_key: Option<String>,
-    pub model: String,
-}
-
-impl XaiConfig {
-    pub fn default_model() -> String {
-        String::from("grok-2")
-    }
-
-    pub fn default_url() -> String {
-        String::from("https://api.xai/v1/chat/completions")
-    }
 }
 
 // GEMINI 
@@ -181,12 +161,7 @@ impl Config {
             std::process::exit(1)
         }
 
-        if app_config.llm == LLMBackend::Xai && app_config.xai.is_none() {
-            eprintln!("Config for XAI is not provided");
-            std::process::exit(1)
-        }
-
-        if app_config.llm == LLMBackend::Gemini && app_config.xai.is_none() {
+        if app_config.llm == LLMBackend::Gemini && app_config.gemini.is_none() {
             eprintln!("Config for GEMINI is not provided");
             std::process::exit(1)
         }

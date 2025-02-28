@@ -3,7 +3,6 @@ use crate::config::Config;
 use crate::event::Event;
 use crate::llamacpp::LLamacpp;
 use crate::ollama::Ollama;
-use crate::xai::Xai;
 use crate::gemini::Gemini;
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -47,7 +46,6 @@ pub enum LLMBackend {
     ChatGPT,
     LLamacpp,
     Ollama,
-    Xai,
     Gemini,
 }
 
@@ -59,7 +57,6 @@ impl LLMModel {
             LLMBackend::ChatGPT => Box::new(ChatGPT::new(config.chatgpt.clone())),
             LLMBackend::LLamacpp => Box::new(LLamacpp::new(config.llamacpp.clone().unwrap())),
             LLMBackend::Ollama => Box::new(Ollama::new(config.ollama.clone().unwrap())),
-            LLMBackend::Xai => Box::new(Xai::new(config.xai.clone().unwrap())),
             LLMBackend::Gemini => Box::new(Gemini::new(config.gemini.clone().unwrap())),
         }
     }
