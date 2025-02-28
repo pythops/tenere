@@ -1,5 +1,5 @@
 use crate::llm::{LLMAnswer, LLMRole};
-use crate::{chat::Chat, prompt::Mode};
+use crate::{chat::{Chat, CommandResult}, prompt::Mode};
 
 use crate::{
     app::{App, AppResult, FocusedBlock},
@@ -7,6 +7,8 @@ use crate::{
 };
 
 use crate::llm::LLM;
+use crate::notification::Notification;
+use crate::notification::NotificationLevel;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use ratatui::text::Line;
@@ -184,69 +186,108 @@ pub async fn handle_key_events(
     }
 
     if let FocusedBlock::Prompt = app.focused_block {
-        if let Mode::Normal = app.prompt.mode {
-            if key_event.code == KeyCode::Enter {
-                let user_input = app.prompt.editor.lines().join("\n");
-                let user_input = user_input.trim();
-                if user_input.is_empty() {
-                    return Ok(());
-                }
+        match app.prompt.mode {
 
-                app.prompt.clear();
-
-                app.chat.plain_chat.push(format!("👤 : {}\n", user_input));
-
-                if app.chat.formatted_chat.width() == 0 {
-                    app.chat.formatted_chat = app
-                        .formatter
-                        .format(format!("👤: {}\n", user_input).as_str());
-                } else {
-                    app.chat.formatted_chat.extend(
-                        app.formatter
-                            .format(format!("👤: {}\n", user_input).as_str()),
-                    );
-                }
-
-                let llm = llm.clone();
-                {
-                    let mut llm = llm.lock().await;
-                    llm.append_chat_msg(user_input.into(), LLMRole::USER);
-                }
-
-                app.spinner.active = true;
-
-                app.chat
-                    .formatted_chat
-                    .lines
-                    .push(Line::raw("🤖: ".to_string()));
-
-                let terminate_response_signal = app.terminate_response_signal.clone();
-
-                let sender = sender.clone();
-
-                let llm = llm.clone();
-
-                tokio::spawn(async move {
-                    let llm = llm.lock().await;
-                    let res = llm.ask(sender.clone(), terminate_response_signal).await;
-
-                    if let Err(e) = res {
-                        sender
-                            .send(Event::LLMEvent(LLMAnswer::StartAnswer))
-                            .unwrap();
-                        sender
-                            .send(Event::LLMEvent(LLMAnswer::Answer(e.to_string())))
-                            .unwrap();
+            Mode::Normal => match key_event.code {
+                KeyCode::Enter => {
+                    let user_input = app.prompt.editor.lines().join("\n").trim().to_string();
+                    if user_input.is_empty() {
+                        return Ok(());
                     }
-                });
+                    app.prompt.clear();
+                    if user_input.starts_with(':') {
+                        // Should not happen in Normal mode with ':' binding moved
+                    } else {
+                        // Handle regular LLM query
+                        app.chat.plain_chat.push(format!("👤: {}\n", user_input));
+
+                        // Update formatted chat
+                        if app.chat.formatted_chat.width() == 0 {
+                            app.chat.formatted_chat = app
+                                .formatter
+                                .format(format!("👤: {}\n", user_input).as_str());
+                        } else {
+                            app.chat.formatted_chat.extend(
+                                app.formatter
+                                    .format(format!("👤: {}\n", user_input).as_str()),
+                            );
+                        }
+
+                        // Send message to LLM
+                        let llm = llm.clone();
+                        {
+                            let mut llm = llm.lock().await;
+                            llm.append_chat_msg(user_input.into(), LLMRole::USER);
+                        }
+
+                        app.spinner.active = true;
+
+                        app.chat
+                            .formatted_chat
+                            .lines
+                            .push(Line::raw("🤖: ".to_string()));
+
+                        let terminate_response_signal = app.terminate_response_signal.clone();
+                        let sender = sender.clone();
+                        let llm = llm.clone();
+
+                        tokio::spawn(async move {
+                            let llm = llm.lock().await;
+                            let res = llm.ask(sender.clone(), terminate_response_signal).await;
+
+                            if let Err(e) = res {
+                                sender
+                                    .send(Event::LLMEvent(LLMAnswer::StartAnswer))
+                                    .unwrap();
+                                sender
+                                    .send(Event::LLMEvent(LLMAnswer::Answer(e.to_string())))
+                                    .unwrap();
+                            }
+                        });
+                    }
+                }
+                _ => {
+                    app.prompt.handler(key_event, app.previous_key, app.clipboard.as_mut());
+                }
+            },            
+            Mode::Visual => {
+                app.prompt.handler(key_event, app.previous_key, app.clipboard.as_mut());
+            },
+            Mode::Command => match key_event.code {
+                KeyCode::Enter => {
+                    let user_input = app.prompt.editor.lines().join("\n").trim().to_string();
+                    if user_input.is_empty() {
+                        app.prompt.mode = Mode::Normal;
+                        return Ok(());
+                    }
+                    app.prompt.clear();
+                    match app.chat.execute_command(&user_input, &mut app.prompt) {
+                        CommandResult::Success(msg) => {
+                            sender.send(Event::Notification(Notification::new(
+                                msg,
+                                NotificationLevel::Info,
+                            )))?;
+                        }
+                        CommandResult::Error(msg) => {
+                            sender.send(Event::Notification(Notification::new(
+                                msg,
+                                NotificationLevel::Error,
+                            )))?;
+                        }
+                        CommandResult::Exit => {} // Already exited
+                    }
+                    app.prompt.mode = Mode::Normal;
+                }
+                _ => {
+                    app.prompt.handler(key_event, app.previous_key, app.clipboard.as_mut());
+                }
+            },
+            Mode::Insert => {
+                app.prompt.handler(key_event, app.previous_key, app.clipboard.as_mut());
             }
         }
-
-        app.prompt
-            .handler(key_event, app.previous_key, app.clipboard.as_mut());
     }
 
     app.previous_key = key_event.code;
-
     Ok(())
 }

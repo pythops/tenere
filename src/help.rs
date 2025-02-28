@@ -32,7 +32,10 @@ impl Default for Help {
                 (Cell::from("j or Down").bold().yellow(), "Scroll down"),
                 (Cell::from("k or Up").bold().yellow(), "Scroll up"),
                 (Cell::from("G").bold().yellow(), "Go to the end"),
+                (Cell::from("m").bold().yellow(), "Load microphone transcript from file via [input] input_file=<file>"),
                 (Cell::from("gg").bold().yellow(), "Go to the top"),
+                (Cell::from(":o <filename>").bold().yellow(), "Open file"),
+                (Cell::from(":w <filename>").bold().yellow(), "Save last response to file"),
                 (Cell::from("?").bold().yellow(), "Show help"),
             ],
         }
@@ -49,7 +52,7 @@ impl Help {
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Fill(1),
-                Constraint::Length(15),
+                Constraint::Length(18),
                 Constraint::Fill(1),
             ])
             .flex(ratatui::layout::Flex::SpaceBetween)

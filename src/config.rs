@@ -6,6 +6,13 @@ use serde::Deserialize;
 use std::path::PathBuf;
 
 #[derive(Deserialize, Debug)]
+#[derive(Default)]
+pub struct InputConfig {
+    pub input_file: Option<String>,
+    pub output_file: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct Config {
     #[serde(default)]
     pub key_bindings: KeyBindings,
@@ -23,6 +30,13 @@ pub struct Config {
     pub xai: Option<XaiConfig>,
 
     pub gemini: Option<GeminiConfig>,
+
+    #[serde(default)]
+    pub input: InputConfig,  // Changed from input_file to input to match TOML structure
+
+    #[serde(default)]
+    pub output_file: Option<String>,
+
 }
 
 pub fn default_llm_backend() -> LLMBackend {
