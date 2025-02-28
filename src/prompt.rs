@@ -86,8 +86,6 @@ impl Prompt<'_> {
             LLMBackend::ChatGPT => Some(self.config.chatgpt.model.clone()),
             LLMBackend::LLamacpp => self.config.llamacpp.as_ref().map(|c| c.url.clone()),
             LLMBackend::Ollama => self.config.ollama.as_ref().map(|o| o.model.clone()),
-            LLMBackend::Gemini => self.config.gemini.as_ref().map(|g| g.model.clone()),
-            LLMBackend::Xai => self.config.xai.as_ref().map(|x| x.model.clone()),
         }
     }
 
