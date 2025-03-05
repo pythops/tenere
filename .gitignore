@@ -1,3 +1,9 @@
-/target
-.undodir
-tenere.archive
+__pycache__
+debug
+release
+*.tgz
+*.mp3
+tags
+tmp
+target
+build
