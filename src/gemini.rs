@@ -1,24 +1,16 @@
-// gemini.rs
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use tokio::time::{sleep, Duration};
+use crate::config::GeminiConfig;
 use crate::event::Event;
+use crate::llm::{LLMAnswer, LLMRole, LLM};
 use async_trait::async_trait;
 use regex::Regex;
-use tokio::sync::mpsc::UnboundedSender;
-use crate::config::GeminiConfig;
-use crate::llm::{LLMAnswer, LLMRole, LLM};
 use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
 use std;
 use std::collections::HashMap;
-
-// Configuration file example
-//
-// [gemini]
-// base_url = "https://generativelanguage.googleapis.com/v1beta/models"
-// model = "gemini-2.0-flash"
-//
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use tokio::sync::mpsc::UnboundedSender;
+use tokio::time::{sleep, Duration};
 
 #[derive(Clone, Debug)]
 pub struct Gemini {
@@ -50,9 +42,9 @@ impl Gemini {
                 .gemini_api_key
                 .ok_or_else(|| {
                     eprintln!(
-                    r#"Can not find the gemini api key
+                        r#"Can not find the gemini api key
 You need to define one whether in the configuration file or as an environment variable"#
-                );
+                    );
                     std::process::exit(1);
                 })
                 .unwrap(),
@@ -98,10 +90,12 @@ impl LLM for Gemini {
 
         if is_openai_compatible {
             // Use OpenAI-compatible format
-            self.ask_openai_format(sender, terminate_response_signal).await
+            self.ask_openai_format(sender, terminate_response_signal)
+                .await
         } else {
             // Use native Gemini API format
-            self.ask_gemini_format(sender, terminate_response_signal).await
+            self.ask_gemini_format(sender, terminate_response_signal)
+                .await
         }
     }
 }
@@ -142,7 +136,7 @@ impl Gemini {
             .headers(headers)
             .json(&body)
             .send()
-        .await?;
+            .await?;
 
         match response.error_for_status() {
             Ok(mut res) => {
@@ -199,23 +193,18 @@ impl Gemini {
         // Create request body
         let body: Value = json!({
         "contents": contents,
-        "generationConfig": {
-        "temperature": 0.7,
-        "topK": 32,
-        "topP": 0.95,
-        "maxOutputTokens": 8192
-        }
         });
 
-        //println!("Sending request to URL: {}", url);
-        // Make the request
         let response = self
             .client
             .post(&url)
             .header("Content-Type", "application/json")
             .json(&body)
             .send()
-        .await?;
+            .await?;
+
+        // Compile regex once
+        let re = Regex::new(r"data:\s(.*)")?;
 
         // Process the response
         match response.error_for_status() {
@@ -227,32 +216,30 @@ impl Gemini {
 
                 // Extract text from Gemini response
                 if let Some(text) = Self::extract_text_from_gemini_response(&json_response) {
-                    // Simulate streaming by breaking text into chunks
-                    for (_i, chunk) in text.chars().collect::<Vec<_>>().chunks(5).enumerate() {
+                    for chunk in text.chars().collect::<Vec<_>>().chunks(5) {
                         if terminate_response_signal.load(Ordering::Relaxed) {
                             break;
                         }
 
                         // Simulate SSE format for compatibility with OpenAI handler
                         let delta_json = json!({
-                        "id": format!("chatcmpl-{}", uuid::Uuid::new_v4()),
-                        "object": "chat.completion.chunk",
-                        "created": chrono::Utc::now().timestamp(),
-                        "model": self.model.clone(),
-                        "choices": [{
-                            "index": 0,
-                            "delta": {
-                            "content": chunk.iter().collect::<String>()
-                        },
-                        "finish_reason": null
-                    }]
-                    });
+                            "id": format!("chatcmpl-{}", uuid::Uuid::new_v4()),
+                            "object": "chat.completion.chunk",
+                            "created": chrono::Utc::now().timestamp(),
+                            "model": self.model.clone(),
+                            "choices": [{
+                                "index": 0,
+                                "delta": {
+                                "content": chunk.iter().collect::<String>()
+                            },
+                            "finish_reason": null
+                        }]
+                        });
 
                         // Convert to SSE format
-                        let sse_message = format!("data: {}\n\n", delta_json.to_string());
+                        let sse_message = format!("data: {}\n\n", delta_json);
 
                         // Process using the same regex as ChatGPT handler
-                        let re = Regex::new(r"data:\s(.*)")?;
                         for captures in re.captures_iter(&sse_message) {
                             if let Some(data_json) = captures.get(1) {
                                 let answer: Value = serde_json::from_str(data_json.as_str())?;
@@ -261,7 +248,9 @@ impl Gemini {
                                     .unwrap_or("\n");
 
                                 if msg != "null" {
-                                    sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
+                                    sender.send(Event::LLMEvent(LLMAnswer::Answer(
+                                        msg.to_string(),
+                                    )))?;
                                 }
 
                                 sleep(Duration::from_millis(10)).await;
@@ -271,7 +260,6 @@ impl Gemini {
 
                     // Send [DONE] message in SSE format
                     let sse_done = "data: [DONE]\n\n";
-                    let re = Regex::new(r"data:\s(.*)")?;
                     for captures in re.captures_iter(sse_done) {
                         if let Some(data_json) = captures.get(1) {
                             if data_json.as_str() == "[DONE]" {
@@ -282,7 +270,7 @@ impl Gemini {
                 } else {
                     // Handle parsing error
                     sender.send(Event::LLMEvent(LLMAnswer::Answer(
-                        "Error: Unable to parse Gemini response".to_string()
+                        "Error: Unable to parse Gemini response".to_string(),
                     )))?;
                     sender.send(Event::LLMEvent(LLMAnswer::EndAnswer))?;
                 }
@@ -328,15 +316,13 @@ impl Gemini {
                 _ => "user",
             };
 
-            // If role changes, add previous content
-            if !current_role.is_empty() && current_role != gemini_role {
-                if !current_parts.is_empty() {
-                    contents.push(json!({
+            if !current_role.is_empty() && current_role != gemini_role && !current_parts.is_empty() 
+            {
+                contents.push(json!({
                     "role": current_role,
                     "parts": current_parts
-                    }));
-                    current_parts = Vec::new();
-                }
+                }));
+                current_parts = Vec::new();
             }
 
             current_role = gemini_role;
@@ -353,5 +339,4 @@ impl Gemini {
 
         contents
     }
-
 }

@@ -27,7 +27,7 @@ pub fn default_llm_backend() -> LLMBackend {
     LLMBackend::ChatGPT
 }
 
-// GEMINI 
+// GEMINI
 #[derive(Deserialize, Debug, Clone)]
 pub struct GeminiConfig {
     pub url: String,
@@ -165,7 +165,6 @@ impl Config {
             eprintln!("Config for GEMINI is not provided");
             std::process::exit(1)
         }
-
 
         app_config
     }

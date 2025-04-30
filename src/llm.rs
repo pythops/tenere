@@ -1,9 +1,9 @@
 use crate::chatgpt::ChatGPT;
 use crate::config::Config;
 use crate::event::Event;
+use crate::gemini::Gemini;
 use crate::llamacpp::LLamacpp;
 use crate::ollama::Ollama;
-use crate::gemini::Gemini;
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::sync::atomic::AtomicBool;
