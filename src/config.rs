@@ -19,10 +19,30 @@ pub struct Config {
     pub llamacpp: Option<LLamacppConfig>,
 
     pub ollama: Option<OllamaConfig>,
+
+    pub gemini: Option<GeminiConfig>,
 }
 
 pub fn default_llm_backend() -> LLMBackend {
     LLMBackend::ChatGPT
+}
+
+// GEMINI
+#[derive(Deserialize, Debug, Clone)]
+pub struct GeminiConfig {
+    pub url: String,
+    pub gemini_api_key: Option<String>,
+    pub model: String,
+}
+
+impl GeminiConfig {
+    pub fn default_model() -> String {
+        String::from("flash-2.0-flash")
+    }
+
+    pub fn default_url() -> String {
+        String::from("https://generativelanguage.googleapis.com/v1beta/models")
+    }
 }
 
 // ChatGPT
@@ -138,6 +158,11 @@ impl Config {
 
         if app_config.llm == LLMBackend::Ollama && app_config.ollama.is_none() {
             eprintln!("Config for Ollama is not provided");
+            std::process::exit(1)
+        }
+
+        if app_config.llm == LLMBackend::Gemini && app_config.gemini.is_none() {
+            eprintln!("Config for GEMINI is not provided");
             std::process::exit(1)
         }
 
