@@ -316,7 +316,7 @@ impl Gemini {
                 _ => "user",
             };
 
-            if !current_role.is_empty() && current_role != gemini_role && !current_parts.is_empty() 
+            if !current_role.is_empty() && current_role != gemini_role && !current_parts.is_empty()
             {
                 contents.push(json!({
                     "role": current_role,
