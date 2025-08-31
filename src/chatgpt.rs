@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
@@ -123,11 +125,9 @@ impl LLM for ChatGPT {
 
                             let answer: Value = serde_json::from_str(data_json.as_str())?;
 
-                            let msg = answer["choices"][0]["delta"]["content"]
-                                .as_str()
-                                .unwrap_or("\n");
+                            let msg = answer["choices"][0]["delta"]["content"].as_str();
 
-                            if msg != "null" {
+                            if let Some(msg) = msg {
                                 sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
                             }
 

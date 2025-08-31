@@ -101,18 +101,17 @@ impl LLM for LLamacpp {
                                 return Ok(());
                             }
 
-                            let answer: Value = serde_json::from_str(data_json.as_str())?;
-
-                            if answer["choices"]["finish_reason"] == "stop" {
+                            if data_json.as_str() == "[DONE]" {
                                 sender.send(Event::LLMEvent(LLMAnswer::EndAnswer))?;
                                 return Ok(());
                             }
+                            let answer: Value = serde_json::from_str(data_json.as_str())?;
 
-                            let msg = answer["choices"][0]["delta"]["content"]
-                                .as_str()
-                                .unwrap_or("\n");
+                            let msg = answer["choices"][0]["delta"]["content"].as_str();
 
-                            sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
+                            if let Some(msg) = msg {
+                                sender.send(Event::LLMEvent(LLMAnswer::Answer(msg.to_string())))?;
+                            }
                         }
                     }
                 }
