@@ -72,13 +72,7 @@ impl History<'_> {
             return;
         }
         let i = match self.state.selected() {
-            Some(i) => {
-                if i > 1 {
-                    i - 1
-                } else {
-                    0
-                }
-            }
+            Some(i) => i.saturating_sub(1),
             None => 0,
         };
         self.state.select(Some(i));
