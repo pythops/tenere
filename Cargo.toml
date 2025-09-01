@@ -1,6 +1,6 @@
 [package]
 name = "tenere"
-version = "0.11.2"
+version = "0.11.3"
 authors = ["Badr Badri <contact@pythops.com>"]
 license = "GPL-3.0-or-later"
 edition = "2021"
