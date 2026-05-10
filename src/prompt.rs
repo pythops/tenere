@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders},
     Frame,
 };
-use tui_textarea::{CursorMove, TextArea};
+use ratatui_textarea::{CursorMove, TextArea};
 use unicode_width::UnicodeWidthStr;
 
 use crate::app::FocusedBlock;
@@ -170,10 +170,8 @@ impl Prompt<'_> {
 
                 KeyCode::Char('G') => self.editor.move_cursor(CursorMove::Bottom),
 
-                KeyCode::Char('g') => {
-                    if previous_key == KeyCode::Char('g') {
-                        self.editor.move_cursor(CursorMove::Jump(0, 0))
-                    }
+                KeyCode::Char('g') if previous_key == KeyCode::Char('g') => {
+                    self.editor.move_cursor(CursorMove::Jump(0, 0))
                 }
 
                 KeyCode::Char('D') => {
@@ -182,19 +180,15 @@ impl Prompt<'_> {
                     self.editor.delete_line_by_head();
                 }
 
-                KeyCode::Char('d') => {
-                    if previous_key == KeyCode::Char('d') {
-                        self.editor.move_cursor(CursorMove::Head);
-                        self.editor.delete_line_by_end();
-                    }
+                KeyCode::Char('d') if previous_key == KeyCode::Char('d') => {
+                    self.editor.move_cursor(CursorMove::Head);
+                    self.editor.delete_line_by_end();
                 }
 
-                KeyCode::Char('c') => {
-                    if previous_key == KeyCode::Char('c') {
-                        self.editor.move_cursor(CursorMove::Head);
-                        self.editor.delete_line_by_end();
-                        self.mode = Mode::Insert;
-                    }
+                KeyCode::Char('c') if previous_key == KeyCode::Char('c') => {
+                    self.editor.move_cursor(CursorMove::Head);
+                    self.editor.delete_line_by_end();
+                    self.mode = Mode::Insert;
                 }
 
                 KeyCode::Char('C') => {
@@ -242,12 +236,10 @@ impl Prompt<'_> {
                     }
                 }
 
-                KeyCode::Char('p') => {
-                    if !self.editor.paste() {
-                        if let Some(clipboard) = clipboard {
-                            if let Ok(text) = clipboard.get_text() {
-                                self.editor.insert_str(text);
-                            }
+                KeyCode::Char('p') if !self.editor.paste() => {
+                    if let Some(clipboard) = clipboard {
+                        if let Ok(text) = clipboard.get_text() {
+                            self.editor.insert_str(text);
                         }
                     }
                 }
