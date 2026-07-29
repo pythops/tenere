@@ -9,7 +9,8 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::config::LLamacppConfig;
 use crate::llm::{LLMAnswer, LLMRole, LLM};
 use reqwest::header::HeaderMap;
-use serde_json::{json, Value};
+use serde::Serialize;
+use serde_json::{Value};
 use std;
 use std::collections::HashMap;
 
@@ -18,7 +19,16 @@ pub struct LLamacpp {
     client: reqwest::Client,
     url: String,
     api_key: Option<String>,
+    model: Option<String>,
     messages: Vec<HashMap<String, String>>,
+}
+
+#[derive(Serialize)]
+struct Body {
+    messages: Vec<HashMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    model: Option<String>,
+    stream: bool,
 }
 
 impl LLamacpp {
@@ -32,6 +42,7 @@ impl LLamacpp {
             client: reqwest::Client::new(),
             url: config.url,
             api_key,
+            model: config.model,
             messages: Vec::new(),
         }
     }
@@ -74,10 +85,11 @@ impl LLM for LLamacpp {
 
         messages.extend(self.messages.clone());
 
-        let body: Value = json!({
-            "messages": messages,
-            "stream": true,
-        });
+        let body = Body {
+            messages: messages,
+            model: self.model.clone(),
+            stream: true,
+        };
 
         let response = self
             .client

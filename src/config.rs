@@ -63,6 +63,7 @@ impl ChatGPTConfig {
 pub struct LLamacppConfig {
     pub url: String,
     pub api_key: Option<String>,
+    pub model: Option<String>,
 }
 
 // Ollama
