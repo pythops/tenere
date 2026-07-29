@@ -99,9 +99,10 @@ impl LLM for LLamacpp {
             .send()
             .await?;
 
+        let mut start_answer_event_sent = false;
+
         match response.error_for_status() {
             Ok(mut res) => {
-                sender.send(Event::LLMEvent(LLMAnswer::StartAnswer))?;
                 let re = Regex::new(r"data:\s(.*)")?;
                 while let Some(chunk) = res.chunk().await? {
                     let chunk = std::str::from_utf8(&chunk)?;
@@ -118,6 +119,19 @@ impl LLM for LLamacpp {
                                 return Ok(());
                             }
                             let answer: Value = serde_json::from_str(data_json.as_str())?;
+
+                            if answer["choices"][0]["delta"]
+                                .get("reasoning_content")
+                                .is_some()
+                                || answer["choices"][0]["delta"].get("role").is_some()
+                            {
+                                continue;
+                            }
+
+                            if !start_answer_event_sent {
+                                sender.send(Event::LLMEvent(LLMAnswer::StartAnswer))?;
+                                start_answer_event_sent = true;
+                            }
 
                             let msg = answer["choices"][0]["delta"]["content"].as_str();
 

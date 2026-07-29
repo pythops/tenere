@@ -5,7 +5,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
-    style::{Color, Style, Stylize},
+    style::{Color, Style},
     text::Text,
     widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
     Frame,

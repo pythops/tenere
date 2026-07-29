@@ -83,19 +83,15 @@ pub async fn handle_key_events(
         },
 
         // `gg`: Move to the top
-        KeyCode::Char('g') => {
-            if app.previous_key == KeyCode::Char('g') {
-                match app.focused_block {
-                    FocusedBlock::Chat => {
-                        app.chat.move_to_top();
-                    }
-                    FocusedBlock::History => {
-                        app.history.move_to_top();
-                    }
-                    _ => (),
-                }
+        KeyCode::Char('g') if app.previous_key == KeyCode::Char('g') => match app.focused_block {
+            FocusedBlock::Chat => {
+                app.chat.move_to_top();
             }
-        }
+            FocusedBlock::History => {
+                app.history.move_to_top();
+            }
+            _ => (),
+        },
 
         // New chat
         KeyCode::Char(c)

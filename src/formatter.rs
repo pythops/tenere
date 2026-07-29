@@ -1,6 +1,8 @@
 use ansi_to_tui::IntoText;
 
-use bat::{assets::HighlightingAssets, config::Config, controller::Controller, Input};
+use bat::{
+    assets::HighlightingAssets, config::Config, controller::Controller, output::OutputHandle, Input,
+};
 use ratatui::text::Text;
 
 pub struct Formatter<'a> {
@@ -24,9 +26,10 @@ impl<'a> Formatter<'a> {
 
     pub fn format(&self, input: &str) -> Text<'static> {
         let mut buffer = String::new();
+        let mut output_handler = OutputHandle::FmtWrite(&mut buffer);
         let input = Input::from_bytes(input.as_bytes()).name("text.md");
         self.controller
-            .run(vec![input.into()], Some(&mut buffer))
+            .run(vec![input.into()], Some(&mut output_handler))
             .unwrap();
         buffer.into_text().unwrap_or(Text::from(buffer))
     }
